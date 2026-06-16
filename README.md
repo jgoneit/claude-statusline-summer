@@ -47,12 +47,11 @@ Sonnet 4.6  my-app  hotfix ~5
 
 - **bash** (macOS 기본 bash 3.2에서 동작)
 - **[jq](https://jqlang.github.io/jq/)** — `brew install jq`
-- **트루컬러(24-bit) 터미널** — 그라데이션 표현에 필요. tmux를 쓴다면
-  `~/.tmux.conf`에 아래를 추가하세요(없으면 그라데이션이 256색 띠로 무너집니다):
-
-  ```
-  set -ga terminal-overrides ",*:Tc"
-  ```
+- **색을 지원하는 터미널.** 트루컬러(24-bit)를 자동 감지해 우선 사용하고,
+  지원하지 않는 터미널(예: Apple Terminal.app)에서는 띠 없는 **256색 팔레트로
+  폴백**합니다. 감지가 틀리면 강제 지정하세요:
+  `export STATUSLINE_SUMMER_COLOR=truecolor` (또는 `256`). tmux에서 트루컬러를
+  쓰려면 `~/.tmux.conf`에 `set -ga terminal-overrides ",*:Tc"`도 필요합니다.
 
 ### 설치
 
@@ -100,7 +99,7 @@ Sonnet 4.6  my-app  hotfix ~5
 전부 `statusline.sh` 한 파일에서 편집합니다:
 
 - **색상** — 상단 팔레트 상수 (`C_MODEL` `C_DIR` `C_GIT` `C_STAGE` `C_MOD`
-  `C_MUTE`). 모두 `\033[38;2;R;G;B m` 형태의 트루컬러입니다.
+  `C_MUTE`). 트루컬러/256 두 벌이 있으니 쓰는 모드 쪽을 수정하세요.
 - **게이지 그라데이션** — 10단계 `SUNSET` 배열과 빈 칸 색 `TRACK`
 - **게이지 모양** — `bar()` 함수 (10칸, 반칸 `▌`로 5% 해상도)
 - **표시 항목·순서·줄 수** — 하단의 `printf '%s\n' …` 행
@@ -160,12 +159,11 @@ so the gauge heats up as you burn the window down.
 
 - **bash** (works on macOS's stock bash 3.2)
 - **[jq](https://jqlang.github.io/jq/)** — `brew install jq`
-- **A truecolor (24-bit) terminal** — needed for the gradient. In tmux, add this
-  to `~/.tmux.conf` (otherwise the gradient collapses to banded 256-color):
-
-  ```
-  set -ga terminal-overrides ",*:Tc"
-  ```
+- **A color terminal.** Truecolor (24-bit) is auto-detected and preferred; on
+  terminals without it (e.g. Apple Terminal.app) it falls back to a curated
+  **256-color palette** with no banding. Force a mode if detection is wrong:
+  `export STATUSLINE_SUMMER_COLOR=truecolor` (or `256`). In tmux, truecolor also
+  needs `set -ga terminal-overrides ",*:Tc"` in `~/.tmux.conf`.
 
 ### Install
 
@@ -213,7 +211,7 @@ Changes take effect on your next interaction.
 Everything lives in the one `statusline.sh` file:
 
 - **Colors** — the palette constants up top (`C_MODEL` `C_DIR` `C_GIT` `C_STAGE`
-  `C_MOD` `C_MUTE`), all `\033[38;2;R;G;B m` truecolor
+  `C_MOD` `C_MUTE`) — truecolor and 256-color sets; edit the one for your mode
 - **Gauge gradient** — the 10-step `SUNSET` array and the empty-cell `TRACK` color
 - **Gauge shape** — the `bar()` function (10 cells, 5% resolution via the half-block `▌`)
 - **Segments, order, line count** — the `printf '%s\n' …` rows at the bottom
