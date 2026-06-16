@@ -27,6 +27,7 @@ input=$(cat)
 
 RESET=$'\033[0m'
 DIM=$'\033[2m'
+US=$'\x1f'   # Unit Separator: a NON-whitespace field delimiter for `read`
 
 # --- Detect color depth ---------------------------------------------------
 # Positive confirmation -> truecolor; otherwise fall back to 256 (safe almost
@@ -70,10 +71,13 @@ else
 fi
 
 # --- Parse every field we need in a single jq pass ------------------------
-# Tab-separated so one `read` unpacks it. Rate limits floor to an int, or
-# become "" when absent (they only exist for Pro/Max after the 1st response).
-IFS=$'\t' read -r MODEL DIR USED REMAIN COST DURATION_MS SESSION_ID RL5 RL7 <<EOF
-$(printf '%s' "$input" | jq -r '
+# One `read`, split on US (0x1f) — a NON-whitespace delimiter. A tab is
+# whitespace, so a tab-delimited read collapses empty fields (an absent 5h
+# rate limit would shift 7d into its slot); US never collapses. The separator
+# is passed to jq via --arg so there is no control char in the source. Rate
+# limits floor to an int, or become "" when absent (Pro/Max, after 1st reply).
+IFS="$US" read -r MODEL DIR USED REMAIN COST DURATION_MS SESSION_ID RL5 RL7 <<EOF
+$(printf '%s' "$input" | jq -j --arg sep "$US" '
   [ .model.display_name                              // "Claude",
     .workspace.current_dir                           // ".",
     (.context_window.used_percentage      // 0   | floor),
@@ -83,7 +87,7 @@ $(printf '%s' "$input" | jq -r '
     .session_id                                      // "nosession",
     (.rate_limits.five_hour.used_percentage | if type == "number" then floor else "" end),
     (.rate_limits.seven_day.used_percentage | if type == "number" then floor else "" end)
-  ] | @tsv')
+  ] | map(tostring) | join($sep)')
 EOF
 
 # === bar: the one gauge to rule them all =================================
@@ -129,13 +133,13 @@ git_segment() {
       b=$(git -C "$dir" branch --show-current 2>/dev/null)
       s=$(git -C "$dir" diff --cached --numstat 2>/dev/null | wc -l | tr -d ' ')
       m=$(git -C "$dir" diff --numstat 2>/dev/null | wc -l | tr -d ' ')
-      printf '%s\t%s\t%s\n' "$b" "$s" "$m" > "$cache"
+      printf '%s\n' "${b}${US}${s}${US}${m}" > "$cache"
     else
-      printf '\t\t\n' > "$cache"   # mark "not a repo" so we don't re-check for 5s
+      printf '%s\n' "${US}${US}" > "$cache"   # mark "not a repo" so we don't re-check for 5s
     fi
   fi
 
-  IFS=$'\t' read -r GIT_BRANCH GIT_STAGED GIT_MODIFIED < "$cache"
+  IFS="$US" read -r GIT_BRANCH GIT_STAGED GIT_MODIFIED < "$cache"
 }
 
 # --- Assemble ------------------------------------------------------------
