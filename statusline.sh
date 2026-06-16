@@ -1,32 +1,83 @@
 #!/bin/bash
 #
-# claude-statusline-summer 🌞 — a summer-themed Claude Code status line.
+# claude-statusline-summer — a summer-themed Claude Code status line.
 #
 # Claude Code pipes session JSON to this script on stdin and renders whatever
-# we print to stdout (one row per line). See the contract in CLAUDE.md or
-# https://code.claude.com/docs/en/statusline
+# we print to stdout (one row per line). Contract:
+#   https://code.claude.com/docs/en/statusline
 #
-# Requires: jq (https://jqlang.github.io/jq/)
+# The "summer" feeling is carried by COLOR, not emoji: a sunset gradient gauge
+# (calm turquoise -> blazing red) reused for context usage AND the 5h/7d rate
+# limits.
+#
+# COLOR DEPTH — auto-detected, with a curated 256-color fallback so the
+# gradient never bands on terminals without 24-bit color (e.g. Apple
+# Terminal.app). Force a mode if detection is wrong:
+#   export STATUSLINE_SUMMER_COLOR=truecolor   # or: 256
+# Inside tmux, truecolor also needs:  set -ga terminal-overrides ",*:Tc"
+#
+# Requires: jq.
+#
+# Test both palettes with mock input:
+#   m='{"model":{"display_name":"Opus 4.8"},"workspace":{"current_dir":"/x/summer"},"context_window":{"used_percentage":62},"session_id":"t"}'
+#   echo "$m" | STATUSLINE_SUMMER_COLOR=truecolor ./statusline.sh
+#   echo "$m" | STATUSLINE_SUMMER_COLOR=256       ./statusline.sh
 
 input=$(cat)
 
-# --- Summer palette -------------------------------------------------------
-# Real ESC bytes baked in via $'...', so plain `printf '%s'` emits them
-# correctly — no `echo -e` (unreliable on macOS's bash 3.2).
 RESET=$'\033[0m'
 DIM=$'\033[2m'
-SEA=$'\033[36m'           # cyan   — calm water
-SKY=$'\033[34m'           # blue   — open sky
-SUN=$'\033[33m'           # yellow — sunshine
-CORAL=$'\033[38;5;209m'   # coral  — warming up
-FIRE=$'\033[31m'          # red    — scorching
+US=$'\x1f'   # Unit Separator: a NON-whitespace field delimiter for `read`
+
+# --- Detect color depth ---------------------------------------------------
+# Positive confirmation -> truecolor; otherwise fall back to 256 (safe almost
+# everywhere). An explicit override always wins.
+case "${STATUSLINE_SUMMER_COLOR:-auto}" in
+  truecolor|24bit) TRUECOLOR=1 ;;
+  256|ansi)        TRUECOLOR=0 ;;
+  *)
+    case "$COLORTERM" in
+      *truecolor*|*24bit*) TRUECOLOR=1 ;;
+      *) case "$TERM" in *direct*) TRUECOLOR=1 ;; *) TRUECOLOR=0 ;; esac ;;
+    esac ;;
+esac
+
+# --- Summer palette (mode-appropriate) ------------------------------------
+# SUNSET / TRACK hold the bare SGR params (bar() wraps them in ESC [ ... m).
+# The 256 ramp is hand-picked for 10 distinct steps: teal -> seafoam -> sand
+# -> gold -> amber -> coral -> red. No auto-conversion, so no banding.
+if [ "$TRUECOLOR" -eq 1 ]; then
+  SUNSET=(
+    "38;2;46;196;182"  "38;2;91;202;191"  "38;2;154;217;201" "38;2;232;224;168" "38;2;255;212;91"
+    "38;2;255;192;58"  "38;2;255;165;58"  "38;2;255;133;82"  "38;2;255;107;74"  "38;2;255;77;77"
+  )
+  TRACK="38;2;56;66;76"
+  C_MODEL=$'\033[38;2;255;212;91m'   # sun gold
+  C_DIR=$'\033[38;2;234;217;176m'    # warm sand
+  C_GIT=$'\033[38;2;46;196;182m'     # turquoise water
+  C_STAGE=$'\033[38;2;255;212;91m'   # gold
+  C_MOD=$'\033[38;2;255;133;82m'     # coral
+  C_MUTE=$'\033[38;2;138;151;161m'   # faded
+else
+  SUNSET=( "38;5;43" "38;5;79" "38;5;115" "38;5;187" "38;5;223"
+           "38;5;221" "38;5;215" "38;5;209" "38;5;203" "38;5;196" )
+  TRACK="38;5;238"
+  C_MODEL=$'\033[38;5;221m'
+  C_DIR=$'\033[38;5;187m'
+  C_GIT=$'\033[38;5;43m'
+  C_STAGE=$'\033[38;5;221m'
+  C_MOD=$'\033[38;5;209m'
+  C_MUTE=$'\033[38;5;102m'
+fi
 
 # --- Parse every field we need in a single jq pass ------------------------
-# Tab-separated so one `read` can unpack it. `// 0` / `// 100` / `// ""`
-# guard against fields that are null (early in a session) or absent
-# (e.g. rate_limits only exist for Pro/Max users after the first response).
-IFS=$'\t' read -r MODEL DIR USED REMAIN COST DURATION_MS SESSION_ID RL5_USED RL7_USED <<EOF
-$(printf '%s' "$input" | jq -r '
+# One `read`, split on US (0x1f) — a NON-whitespace delimiter. A tab is
+# whitespace, so a tab-delimited read collapses empty fields (an absent 5h
+# rate limit would shift 7d into its slot); US never collapses. The separator
+# is passed to jq via --arg so there is no control char in the source. Rate
+# limits floor to an int, or become "" when absent (Pro/Max, after 1st reply).
+IFS="$US" read -r MODEL DIR USED REMAIN COST DURATION_MS SESSION_ID RL5 RL7 <<EOF
+$(printf '%s' "$input" | jq -j --arg sep "$US" '
   [ .model.display_name                              // "Claude",
     .workspace.current_dir                           // ".",
     (.context_window.used_percentage      // 0   | floor),
@@ -34,42 +85,36 @@ $(printf '%s' "$input" | jq -r '
     .cost.total_cost_usd                             // 0,
     .cost.total_duration_ms                          // 0,
     .session_id                                      // "nosession",
-    (.rate_limits.five_hour.used_percentage          // ""),
-    (.rate_limits.seven_day.used_percentage          // "")
-  ] | @tsv')
+    (.rate_limits.five_hour.used_percentage | if type == "number" then floor else "" end),
+    (.rate_limits.seven_day.used_percentage | if type == "number" then floor else "" end)
+  ] | map(tostring) | join($sep)')
 EOF
 
-# === heat_segment: the summer "temperature" gauge ========================
-# Turns context-window usage into a summer heat reading: an emoji plus a
-# colored 10-block bar that gets "hotter" as the context fills up. Sets the
-# globals HEAT_EMOJI and HEAT_BAR.
-heat_segment() {
-  local pct=$1
-  local filled=$((pct / 10)); [ "$filled" -gt 10 ] && filled=10
-  local empty=$((10 - filled))
+# === bar: the one gauge to rule them all =================================
+# A percentage (0-100 int) -> a 10-cell sunset gradient bar with half-cell
+# (5%) resolution via the left-half block U+258C. Reused for context usage
+# and both rate-limit windows so every gauge shares one visual language.
+bar() {
+  local pct=$1 esc=$'\033' out="" i n halves
+  [ -z "$pct" ] && pct=0
+  [ "$pct" -lt 0 ]   && pct=0
+  [ "$pct" -gt 100 ] && pct=100
+  halves=$(( (pct + 2) / 5 )); [ "$halves" -gt 20 ] && halves=20
 
-  local emoji color fill
-  # pct(0–100)로 heat 결정 — 0=잔잔한 바다 … 100=폭염
-  if   [ "$pct" -ge 90 ]; then emoji="🔥"; color="$FIRE";  fill="█"   # 거의 꽉 참 — 폭염
-  elif [ "$pct" -ge 70 ]; then emoji="🌅"; color="$CORAL"; fill="█"   # 달아오름 — 노을
-  elif [ "$pct" -ge 50 ]; then emoji="🌞"; color="$SUN";   fill="█"   # 한낮 태양
-  elif [ "$pct" -ge 25 ]; then emoji="🐠"; color="$SKY";   fill="█"   # 따뜻한 얕은 물
-  else                         emoji="🌊"; color="$SEA";   fill="█"   # 잔잔, 여유 충분
-  fi
-
-  # Build the bar: a run of spaces, then swap spaces for the block chars.
-  local fillbar="" emptybar=""
-  [ "$filled" -gt 0 ] && { printf -v fillbar "%${filled}s" ""; fillbar="${fillbar// /$fill}"; }
-  [ "$empty"  -gt 0 ] && { printf -v emptybar "%${empty}s" ""; emptybar="${emptybar// /░}"; }
-
-  HEAT_EMOJI="$emoji"
-  HEAT_BAR="${color}${fillbar}${RESET}${DIM}${emptybar}${RESET}"
+  for i in 0 1 2 3 4 5 6 7 8 9; do
+    n=$(( halves - i * 2 ))
+    if   [ "$n" -ge 2 ]; then out="${out}${esc}[${SUNSET[$i]}m█"   # full
+    elif [ "$n" -eq 1 ]; then out="${out}${esc}[${SUNSET[$i]}m▌"   # half = 5%
+    else                      out="${out}${esc}[${TRACK}m░"        # empty
+    fi
+  done
+  printf '%s%s' "$out" "$RESET"
 }
 
-# === git_segment: branch + staged/modified counts, cached per session =====
+# === git_segment: branch + staged/modified, cached per session ===========
 # This script reruns on every assistant message, so the git calls are cached
-# to a temp file keyed on SESSION_ID (stable per session, unlike $$ which
-# changes each invocation) with a 5s TTL. Sets GIT_BRANCH/STAGED/MODIFIED.
+# to a temp file keyed on SESSION_ID (stable per session, unlike $$) with a
+# 5s TTL. Sets GIT_BRANCH / GIT_STAGED / GIT_MODIFIED.
 git_segment() {
   local dir=$1 sid=$2
   local cache="/tmp/statusline-summer-$sid"
@@ -88,27 +133,25 @@ git_segment() {
       b=$(git -C "$dir" branch --show-current 2>/dev/null)
       s=$(git -C "$dir" diff --cached --numstat 2>/dev/null | wc -l | tr -d ' ')
       m=$(git -C "$dir" diff --numstat 2>/dev/null | wc -l | tr -d ' ')
-      printf '%s\t%s\t%s\n' "$b" "$s" "$m" > "$cache"
+      printf '%s\n' "${b}${US}${s}${US}${m}" > "$cache"
     else
-      printf '\t\t\n' > "$cache"   # mark "not a repo" so we don't re-check for 5s
+      printf '%s\n' "${US}${US}" > "$cache"   # mark "not a repo" so we don't re-check for 5s
     fi
   fi
 
-  IFS=$'\t' read -r GIT_BRANCH GIT_STAGED GIT_MODIFIED < "$cache"
+  IFS="$US" read -r GIT_BRANCH GIT_STAGED GIT_MODIFIED < "$cache"
 }
 
-# --- Assemble the segments ------------------------------------------------
-heat_segment "$USED"
+# --- Assemble ------------------------------------------------------------
 git_segment "$DIR" "$SESSION_ID"
-
 DIR_NAME="${DIR##*/}"
 
-# Git display (only when inside a repo)
+# Git display (only inside a repo) — color does the work, no glyphs
 GIT_DISPLAY=""
 if [ -n "$GIT_BRANCH" ]; then
-  GIT_DISPLAY=" ${SEA}🌴 ${GIT_BRANCH}${RESET}"
-  [ "${GIT_STAGED:-0}" -gt 0 ] 2>/dev/null && GIT_DISPLAY="${GIT_DISPLAY} ${SUN}+${GIT_STAGED}${RESET}"
-  [ "${GIT_MODIFIED:-0}" -gt 0 ] 2>/dev/null && GIT_DISPLAY="${GIT_DISPLAY} ${CORAL}~${GIT_MODIFIED}${RESET}"
+  GIT_DISPLAY="  ${C_GIT}${GIT_BRANCH}${RESET}"
+  [ "${GIT_STAGED:-0}"   -gt 0 ] 2>/dev/null && GIT_DISPLAY="${GIT_DISPLAY} ${C_STAGE}+${GIT_STAGED}${RESET}"
+  [ "${GIT_MODIFIED:-0}" -gt 0 ] 2>/dev/null && GIT_DISPLAY="${GIT_DISPLAY} ${C_MOD}~${GIT_MODIFIED}${RESET}"
 fi
 
 # Cost + elapsed time
@@ -117,22 +160,20 @@ DURATION_SEC=$((DURATION_MS / 1000))
 MINS=$((DURATION_SEC / 60))
 SECS=$((DURATION_SEC % 60))
 
-# --- Print the status line (one echo == one row) --------------------------
-printf '%s\n' "${SUN}🌞 [${MODEL}]${RESET} 📁 ${DIR_NAME}${GIT_DISPLAY}"
-printf '%s\n' "${HEAT_EMOJI} ${HEAT_BAR} ${USED}% used (${REMAIN}% left) ${DIM}·${RESET} ${SUN}💰 ${COST_FMT}${RESET} ${DIM}·${RESET} ⏳ ${MINS}m ${SECS}s"
+# --- Print (one printf == one row) ---------------------------------------
+# Row 1: identity
+printf '%s\n' "${C_MODEL}${MODEL}${RESET}  ${C_DIR}${DIR_NAME}${RESET}${GIT_DISPLAY}"
 
-# Rate-limit row (only when the data is present, i.e. Pro/Max after 1st call)
-if [ -n "$RL5_USED" ] || [ -n "$RL7_USED" ]; then
-  RL_PARTS=""
-  if [ -n "$RL5_USED" ]; then
-    RL5_LEFT=$((100 - $(printf '%.0f' "$RL5_USED")))
-    RL_PARTS="5h ${RL5_LEFT}% left"
-  fi
-  if [ -n "$RL7_USED" ]; then
-    RL7_LEFT=$((100 - $(printf '%.0f' "$RL7_USED")))
-    RL_PARTS="${RL_PARTS:+$RL_PARTS ${DIM}·${RESET} }7d ${RL7_LEFT}% left"
-  fi
-  printf '%s\n' "${SEA}🍹 ${RL_PARTS}${RESET}"
+# Row 2: context gauge + cost + time
+printf '%s\n' "$(bar "$USED")  ${USED}% ctx  ${DIM}·${RESET}  ${C_STAGE}${COST_FMT}${RESET}  ${DIM}·${RESET}  ${C_MUTE}${MINS}m ${SECS}s${RESET}"
+
+# Row 3: rate-limit gauges, same bar — only when present (Pro/Max).
+# Shows % USED so the gauge heats up as you burn the window down.
+if [ -n "$RL5" ] || [ -n "$RL7" ]; then
+  RL_LINE=""
+  [ -n "$RL5" ] && RL_LINE="${C_MUTE}5h${RESET} $(bar "$RL5") ${RL5}%"
+  [ -n "$RL7" ] && RL_LINE="${RL_LINE:+$RL_LINE   ${DIM}·${RESET}   }${C_MUTE}7d${RESET} $(bar "$RL7") ${RL7}%"
+  printf '%s\n' "$RL_LINE"
 fi
 
 exit 0
