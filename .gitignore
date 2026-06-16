@@ -6,6 +6,9 @@
 .claude/worktrees/
 CLAUDE.local.md
 
+# Keep project guidance local — not shared on the remote
+CLAUDE.md
+
 # macOS
 .DS_Store
 
