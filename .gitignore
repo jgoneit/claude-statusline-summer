@@ -1,0 +1,8 @@
+# Machine-specific Claude Code settings (contains an absolute path — not portable)
+.claude/settings.local.json
+
+# macOS
+.DS_Store
+
+# Status line per-session git cache (normally lives in /tmp; ignore if it lands here)
+statusline-summer-*
