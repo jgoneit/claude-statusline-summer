@@ -8,49 +8,51 @@
 ## 한국어
 
 Claude Code 프롬프트 입력창 아래에 표시되는 여름 테마 statusline.
-모델명, rate limit (5h/7d) 잔여량, 컨텍스트 사용량, git 브랜치, 그리고 컨텍스트
-사용량을 여름 **"체감 온도"** 게이지(잔잔한 바다 → 폭염)로 보여줍니다.
+모델명, 현재 폴더, git 브랜치, 컨텍스트 사용량, 비용/시간, 그리고 5h/7d rate
+limit을 보여줍니다.
 
-단일 Bash 스크립트(`statusline.sh`) + `jq`로 동작합니다. 플러그인이 아니라
-직접 등록하는 방식이라 내부가 훤히 보이고 고치기 쉽습니다.
+여름 느낌은 **이모지가 아니라 색**으로 표현합니다: 손수 고른 24-bit 트루컬러
+팔레트와, 잔잔한 청록 → 타오르는 빨강으로 흐르는 **하나의 선셋 그라데이션
+게이지**(`bar`)를 컨텍스트와 5h/7d rate limit에 똑같이 재사용합니다. 채움이
+낮으면 시원한 바다색, 가득 차면 뜨거운 색이 드러나 그라데이션 자체가 "열기"를
+나타냅니다.
 
 ### 미리보기
 
-컨텍스트 사용량이 오를수록 게이지가 "뜨거워집니다":
+> 막대는 청록(여유) → 빨강(가득)으로 흐르는 트루컬러 그라데이션입니다.
+> 아래 미리보기는 색을 담지 못하니 **채움 정도**만 참고하세요. 반칸(▌)은 5%
+> 단위입니다.
 
 ```
-# 🌊 여유 (0–24%)
-🌞 [Opus] 📁 my-app 🌴 main
-🌊 █░░░░░░░░░ 10% used (90% left) · 💰 $0.05 · ⏳ 2m 10s
-🍹 5h 88% left · 7d 73% left
+# 컨텍스트 10% — 이른 세션
+Opus 4.8  my-app  main
+█░░░░░░░░░  10% ctx  ·  $0.05  ·  2m 10s
 
-# 🐠 따뜻한 얕은 물 (25–49%)
-🌞 [Opus] 📁 my-app 🌴 feature/login +1 ~2
-🐠 ████░░░░░░ 42% used (58% left) · 💰 $0.21 · ⏳ 9m 30s
-🍹 5h 70% left · 7d 65% left
+# 컨텍스트 43% — rate limit 표시 (Pro/Max)
+Opus 4.8  my-app  feature/login +1 ~2
+████▌░░░░░  43% ctx  ·  $0.21  ·  9m 30s
+5h ██████░░░░ 58%   ·   7d ████░░░░░░ 40%
 
-# 🌞 한낮 (50–69%)
-🌞 [Opus] 📁 my-app 🌴 main +1
-🌞 ██████░░░░ 60% used (40% left) · 💰 $0.33 · ⏳ 14m 20s
-🍹 5h 58% left · 7d 63% left
-
-# 🌅 달아오름 (70–89%)
-🌞 [Opus] 📁 my-app 🌴 feature/login +2 ~3
-🌅 ███████░░░ 75% used (25% left) · 💰 $0.42 · ⏳ 18m 04s
-🍹 5h 41% left · 7d 60% left
-
-# 🔥 폭염 (90%+)
-🌞 [Sonnet] 📁 my-app 🌴 hotfix
-🔥 █████████░ 95% used (5% left) · 💰 $0.88 · ⏳ 31m 12s
-🍹 5h 12% left · 7d 55% left
+# 컨텍스트 95% — 거의 가득
+Sonnet 4.6  my-app  hotfix ~5
+█████████▌  95% ctx  ·  $0.88  ·  31m 12s
+5h █████████▌ 95%   ·   7d ██████░░░░ 61%
 ```
 
-> rate limit 행(🍹)은 Claude.ai **Pro/Max** 사용자에게 첫 응답 이후에만 표시됩니다.
+색 가이드: 모델명은 **골드**, 폴더는 **샌드**, 브랜치는 **청록**, `+`스테이지는
+**골드**, `~`변경은 **코랄**. rate limit 행은 **사용량(%)**을 보여줘 창을
+소진할수록 게이지가 뜨거워집니다.
 
 ### 요구 사항
 
 - **bash** (macOS 기본 bash 3.2에서 동작)
 - **[jq](https://jqlang.github.io/jq/)** — `brew install jq`
+- **트루컬러(24-bit) 터미널** — 그라데이션 표현에 필요. tmux를 쓴다면
+  `~/.tmux.conf`에 아래를 추가하세요(없으면 그라데이션이 256색 띠로 무너집니다):
+
+  ```
+  set -ga terminal-overrides ",*:Tc"
+  ```
 
 ### 설치
 
@@ -71,7 +73,7 @@ Claude Code 프롬프트 입력창 아래에 표시되는 여름 테마 statusli
 설정을 바꿔도 다음 상호작용 때 반영됩니다.
 
 > 이 저장소에서 바로 작업한다면 `.claude/settings.local.json`에 절대 경로로
-> 이미 연결돼 있어, 별도 설치 없이 바로 동작합니다.
+> 이미 연결돼 있어 별도 설치 없이 동작합니다.
 
 ### 설정
 
@@ -84,28 +86,29 @@ Claude Code 프롬프트 입력창 아래에 표시되는 여름 테마 statusli
 
 | 항목 | 설명 |
 |------|------|
-| `🌞 [Model]` | 현재 Claude 모델 |
-| `📁 dir` | 현재 폴더 이름 |
-| `🌴 branch +staged ~modified` | git 브랜치 + 스테이지/변경 파일 수 (저장소 안에서만) |
-| 🌊 🐠 🌞 🌅 🔥 게이지 | 컨텍스트 사용량을 여름 체감 온도로 (잔잔한 바다 → 폭염) |
-| `72% used (28% left)` | 컨텍스트 사용/잔여 % |
-| `💰 $0.42 · ⏳ 12m 30s` | 세션 비용 + 경과 시간 |
-| `🍹 5h … · 7d …` | 5시간/7일 rate limit **잔여량** (Pro/Max) |
-
-게이지 색은 사용량에 따라 바다색 → 노랑 → 빨강으로 바뀝니다.
+| `Opus 4.8` | 현재 Claude 모델 (골드) |
+| `my-app` | 현재 폴더 이름 (샌드) |
+| `main +1 ~2` | git 브랜치(청록) + 스테이지(`+`, 골드) / 변경(`~`, 코랄) — 저장소 안에서만 |
+| `████▌░░░░░ 43% ctx` | 컨텍스트 사용량 — 청록→빨강 그라데이션 게이지 |
+| `$0.21` | 세션 비용 |
+| `9m 30s` | 경과 시간 |
+| `5h ██████░░░░ 58%` | 5시간 rate limit **사용량** (소진할수록 게이지가 채워짐) — Pro/Max |
+| `7d ████░░░░░░ 40%` | 7일 rate limit **사용량** — Pro/Max |
 
 ### 커스터마이즈
 
 전부 `statusline.sh` 한 파일에서 편집합니다:
 
-- **색상** — 상단 팔레트 상수 (`SEA` `SKY` `SUN` `CORAL` `FIRE`)
-- **이모지 / 임계값** — `heat_segment()`의 `if … -ge` 사다리
+- **색상** — 상단 팔레트 상수 (`C_MODEL` `C_DIR` `C_GIT` `C_STAGE` `C_MOD`
+  `C_MUTE`). 모두 `\033[38;2;R;G;B m` 형태의 트루컬러입니다.
+- **게이지 그라데이션** — 10단계 `SUNSET` 배열과 빈 칸 색 `TRACK`
+- **게이지 모양** — `bar()` 함수 (10칸, 반칸 `▌`로 5% 해상도)
 - **표시 항목·순서·줄 수** — 하단의 `printf '%s\n' …` 행
 
 수정 후 mock JSON으로 바로 미리보기:
 
 ```bash
-echo '{"model":{"display_name":"Opus"},"workspace":{"current_dir":"'"$PWD"'"},"context_window":{"used_percentage":72,"remaining_percentage":28},"cost":{"total_cost_usd":0.42,"total_duration_ms":750000},"session_id":"demo","rate_limits":{"five_hour":{"used_percentage":23},"seven_day":{"used_percentage":41}}}' | ./statusline.sh
+echo '{"model":{"display_name":"Opus 4.8"},"workspace":{"current_dir":"'"$PWD"'"},"context_window":{"used_percentage":43},"cost":{"total_cost_usd":0.21,"total_duration_ms":570000},"session_id":"demo","rate_limits":{"five_hour":{"used_percentage":58},"seven_day":{"used_percentage":40}}}' | ./statusline.sh
 ```
 
 ### 기여하기
@@ -119,51 +122,50 @@ echo '{"model":{"display_name":"Opus"},"workspace":{"current_dir":"'"$PWD"'"},"c
 ## English
 
 A summer-themed Claude Code statusline that displays below the prompt input.
-Shows model name, rate limits (5h/7d) remaining, context-window usage, git
-branch, and renders context usage as a summer **"heat gauge"** (calm sea →
-heatwave).
+Shows model name, current folder, git branch, context-window usage, cost/time,
+and 5h/7d rate limits.
 
-It's a single Bash script (`statusline.sh`) + `jq` — not a plugin, but a script
-you register yourself, so it's transparent and easy to tweak.
+The "summer" feeling is carried by **color, not emoji**: a hand-picked 24-bit
+truecolor palette and a single sunset-gradient gauge (`bar`) — calm turquoise →
+blazing red — reused for context usage **and** both rate-limit windows. A low
+fill is cool sea-tones; a high fill reveals the hot end, so the gradient itself
+encodes "heat."
 
 ### Preview
 
-The gauge gets "hotter" as the context fills up:
+> The bar is a turquoise (cool) → red (full) truecolor gradient. These previews
+> can't show color, so read the **fill level** only. A half-block (▌) is 5%.
 
 ```
-# 🌊 Plenty of room (0–24%)
-🌞 [Opus] 📁 my-app 🌴 main
-🌊 █░░░░░░░░░ 10% used (90% left) · 💰 $0.05 · ⏳ 2m 10s
-🍹 5h 88% left · 7d 73% left
+# Context 10% — early in the session
+Opus 4.8  my-app  main
+█░░░░░░░░░  10% ctx  ·  $0.05  ·  2m 10s
 
-# 🐠 Warm shallows (25–49%)
-🌞 [Opus] 📁 my-app 🌴 feature/login +1 ~2
-🐠 ████░░░░░░ 42% used (58% left) · 💰 $0.21 · ⏳ 9m 30s
-🍹 5h 70% left · 7d 65% left
+# Context 43% — with rate limits (Pro/Max)
+Opus 4.8  my-app  feature/login +1 ~2
+████▌░░░░░  43% ctx  ·  $0.21  ·  9m 30s
+5h ██████░░░░ 58%   ·   7d ████░░░░░░ 40%
 
-# 🌞 Midday (50–69%)
-🌞 [Opus] 📁 my-app 🌴 main +1
-🌞 ██████░░░░ 60% used (40% left) · 💰 $0.33 · ⏳ 14m 20s
-🍹 5h 58% left · 7d 63% left
-
-# 🌅 Heating up (70–89%)
-🌞 [Opus] 📁 my-app 🌴 feature/login +2 ~3
-🌅 ███████░░░ 75% used (25% left) · 💰 $0.42 · ⏳ 18m 04s
-🍹 5h 41% left · 7d 60% left
-
-# 🔥 Heatwave (90%+)
-🌞 [Sonnet] 📁 my-app 🌴 hotfix
-🔥 █████████░ 95% used (5% left) · 💰 $0.88 · ⏳ 31m 12s
-🍹 5h 12% left · 7d 55% left
+# Context 95% — nearly full
+Sonnet 4.6  my-app  hotfix ~5
+█████████▌  95% ctx  ·  $0.88  ·  31m 12s
+5h █████████▌ 95%   ·   7d ██████░░░░ 61%
 ```
 
-> The rate-limit row (🍹) appears only for Claude.ai **Pro/Max** users, after the
-> first response.
+Color guide: model name is **gold**, folder **sand**, branch **turquoise**,
+`+`staged **gold**, `~`modified **coral**. The rate-limit row shows **% used**,
+so the gauge heats up as you burn the window down.
 
 ### Requirements
 
 - **bash** (works on macOS's stock bash 3.2)
 - **[jq](https://jqlang.github.io/jq/)** — `brew install jq`
+- **A truecolor (24-bit) terminal** — needed for the gradient. In tmux, add this
+  to `~/.tmux.conf` (otherwise the gradient collapses to banded 256-color):
+
+  ```
+  set -ga terminal-overrides ",*:Tc"
+  ```
 
 ### Install
 
@@ -197,28 +199,29 @@ Changes take effect on your next interaction.
 
 | Section | Description |
 |---------|-------------|
-| `🌞 [Model]` | Current Claude model |
-| `📁 dir` | Current folder name |
-| `🌴 branch +staged ~modified` | git branch + staged/modified counts (inside a repo) |
-| 🌊 🐠 🌞 🌅 🔥 gauge | Context usage as a summer temperature (calm sea → heatwave) |
-| `72% used (28% left)` | Context used / remaining % |
-| `💰 $0.42 · ⏳ 12m 30s` | Session cost + elapsed time |
-| `🍹 5h … · 7d …` | 5-hour / 7-day rate limit **remaining** (Pro/Max) |
-
-The gauge color shifts sea → yellow → red as usage rises.
+| `Opus 4.8` | Current Claude model (gold) |
+| `my-app` | Current folder name (sand) |
+| `main +1 ~2` | git branch (turquoise) + staged (`+`, gold) / modified (`~`, coral) — inside a repo |
+| `████▌░░░░░ 43% ctx` | Context usage — turquoise→red gradient gauge |
+| `$0.21` | Session cost |
+| `9m 30s` | Elapsed time |
+| `5h ██████░░░░ 58%` | 5-hour rate limit **usage** (gauge fills as you burn the window) — Pro/Max |
+| `7d ████░░░░░░ 40%` | 7-day rate limit **usage** — Pro/Max |
 
 ### Customize
 
 Everything lives in the one `statusline.sh` file:
 
-- **Colors** — the palette constants up top (`SEA` `SKY` `SUN` `CORAL` `FIRE`)
-- **Emoji / thresholds** — the `if … -ge` ladder in `heat_segment()`
+- **Colors** — the palette constants up top (`C_MODEL` `C_DIR` `C_GIT` `C_STAGE`
+  `C_MOD` `C_MUTE`), all `\033[38;2;R;G;B m` truecolor
+- **Gauge gradient** — the 10-step `SUNSET` array and the empty-cell `TRACK` color
+- **Gauge shape** — the `bar()` function (10 cells, 5% resolution via the half-block `▌`)
 - **Segments, order, line count** — the `printf '%s\n' …` rows at the bottom
 
 Preview a change instantly with mock JSON:
 
 ```bash
-echo '{"model":{"display_name":"Opus"},"workspace":{"current_dir":"'"$PWD"'"},"context_window":{"used_percentage":72,"remaining_percentage":28},"cost":{"total_cost_usd":0.42,"total_duration_ms":750000},"session_id":"demo","rate_limits":{"five_hour":{"used_percentage":23},"seven_day":{"used_percentage":41}}}' | ./statusline.sh
+echo '{"model":{"display_name":"Opus 4.8"},"workspace":{"current_dir":"'"$PWD"'"},"context_window":{"used_percentage":43},"cost":{"total_cost_usd":0.21,"total_duration_ms":570000},"session_id":"demo","rate_limits":{"five_hour":{"used_percentage":58},"seven_day":{"used_percentage":40}}}' | ./statusline.sh
 ```
 
 ### Contributing
