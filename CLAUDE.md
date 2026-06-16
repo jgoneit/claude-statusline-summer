@@ -66,6 +66,36 @@ echo '{"model":{"display_name":"Opus"},"workspace":{"current_dir":"/tmp"},"conte
   shared `settings.json` clean. Adjust the path if you move the repo.
 - Other machines: install per `README.md` (user `~/.claude/settings.json`).
 - Changes won't appear until the next interaction triggers a rerun.
+- The shared `.claude/settings.json` holds a **Claude Code hook** (no machine
+  paths): a `PostToolUse` (Edit|Write) hook that runs `bash -n statusline.sh`
+  after the script is edited and bounces syntax errors straight back to Claude.
+
+## Git conventions
+
+Commits follow **Conventional Commits**: `<type>(<optional scope>): <description>`.
+
+- **Types:** `feat fix docs style refactor perf test build ci chore revert`.
+- **Scope** (optional): the area touched — e.g. `heat`, `git`, `rate-limits`, `readme`, `hooks`.
+- **Imperative, lowercase** subject, no trailing period: `feat(heat): add sunset tier`.
+- **Branches:** `<type>/<short-desc>` (e.g. `feat/heat-gauge`, `fix/null-context`).
+  Don't develop changes directly on `main`.
+- Claude commits keep the `Co-Authored-By: Claude ...` trailer.
+- Never commit `.claude/settings.local.json` (machine-specific; gitignored).
+
+### Enforcement (git hooks)
+
+Hooks live in `.githooks/` and are committed, but git requires a one-time opt-in per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+- `commit-msg` — rejects non-Conventional-Commits subjects (Merge/Revert/fixup! exempt).
+- `pre-commit` — runs `bash -n` (and `shellcheck` if installed) on `statusline.sh`,
+  and blocks staging `.claude/settings.local.json`.
+
+These are git-native (apply to any committer); the Claude Code hook above is the
+in-session equivalent for Claude's own edits.
 
 ## Gotchas
 

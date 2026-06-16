@@ -62,3 +62,15 @@ The look lives in two places in `statusline.sh`:
 - `heat_segment()`, which maps context usage to an emoji + bar color.
 
 Edit those to taste, then re-run the test command above to preview.
+
+## Contributing
+
+Commits use [Conventional Commits](https://www.conventionalcommits.org/)
+(`feat:`, `fix:`, `docs:`, `chore:`, …). After cloning, enable the repo's git
+hooks once to validate commit messages and syntax-check `statusline.sh`:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+See `CLAUDE.md` → **Git conventions** for the full convention and what each hook checks.
