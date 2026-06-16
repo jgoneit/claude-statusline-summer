@@ -1,6 +1,11 @@
 # Machine-specific Claude Code settings (contains an absolute path — not portable)
 .claude/settings.local.json
 
+# Claude Code — local agent / worktree artifacts (generated, per-machine)
+# Shared .claude/settings.json and any .claude/{agents,commands,skills} stay committed.
+.claude/worktrees/
+CLAUDE.local.md
+
 # macOS
 .DS_Store
 
