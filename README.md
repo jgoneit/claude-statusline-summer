@@ -29,6 +29,11 @@ Claude Code 프롬프트 입력창 아래에 표시되는 여름 테마 statusli
 🐠 ████░░░░░░ 42% used (58% left) · 💰 $0.21 · ⏳ 9m 30s
 🍹 5h 70% left · 7d 65% left
 
+# 🌞 한낮 (50–69%)
+🌞 [Opus] 📁 my-app 🌴 main +1
+🌞 ██████░░░░ 60% used (40% left) · 💰 $0.33 · ⏳ 14m 20s
+🍹 5h 58% left · 7d 63% left
+
 # 🌅 달아오름 (70–89%)
 🌞 [Opus] 📁 my-app 🌴 feature/login +2 ~3
 🌅 ███████░░░ 75% used (25% left) · 💰 $0.42 · ⏳ 18m 04s
@@ -106,12 +111,7 @@ echo '{"model":{"display_name":"Opus"},"workspace":{"current_dir":"'"$PWD"'"},"c
 ### 기여하기
 
 커밋은 [Conventional Commits](https://www.conventionalcommits.org/)
-(`feat:`, `fix:`, `docs:`, `chore:` …)를 따릅니다. 클론 후 한 번만 git 훅을
-활성화하면 커밋 메시지 검사와 `statusline.sh` 문법 검사가 동작합니다:
-
-```bash
-git config core.hooksPath .githooks
-```
+(`feat:`, `fix:`, `docs:`, `chore:` …)를 따릅니다. PR 환영합니다 🎉
 
 ---
 
@@ -140,6 +140,11 @@ The gauge gets "hotter" as the context fills up:
 🌞 [Opus] 📁 my-app 🌴 feature/login +1 ~2
 🐠 ████░░░░░░ 42% used (58% left) · 💰 $0.21 · ⏳ 9m 30s
 🍹 5h 70% left · 7d 65% left
+
+# 🌞 Midday (50–69%)
+🌞 [Opus] 📁 my-app 🌴 main +1
+🌞 ██████░░░░ 60% used (40% left) · 💰 $0.33 · ⏳ 14m 20s
+🍹 5h 58% left · 7d 63% left
 
 # 🌅 Heating up (70–89%)
 🌞 [Opus] 📁 my-app 🌴 feature/login +2 ~3
@@ -219,12 +224,7 @@ echo '{"model":{"display_name":"Opus"},"workspace":{"current_dir":"'"$PWD"'"},"c
 ### Contributing
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org/)
-(`feat:`, `fix:`, `docs:`, `chore:`, …). After cloning, enable the git hooks once
-to validate commit messages and syntax-check `statusline.sh`:
-
-```bash
-git config core.hooksPath .githooks
-```
+(`feat:`, `fix:`, `docs:`, `chore:`, …). PRs welcome 🎉
 
 ## License
 
