@@ -31,20 +31,21 @@ ctx █░░░░░░░░░   10%  ·  $0.05  ·  ⧗ 2m 10s
 # 컨텍스트 43% — rate limit + 리셋 카운트다운 (Pro/Max)
 Opus 4.8 xhigh  my-app  feature/login +1 ~2
 ctx ████▌░░░░░   43%  ·  $0.21  ·  ⧗ 9m 30s
-5h  ██████░░░░   58%  ·  ⧗ Tue 14:00
-7d  ████░░░░░░   40%  ·  ⧗ Sun 12/24
+5h  ██████░░░░   58%  ·  ⧗ 04h 35m
+7d  ████░░░░░░   40%  ·  ⧗ Wed 15:47
 
 # 컨텍스트 95% — 거의 가득
 Sonnet 4.6 high  my-app  hotfix ~5
 ctx █████████▌   95%  ·  $0.88  ·  ⧗ 2h 11m 12s
-5h  █████████▌   95%  ·  ⧗ Wed 09:05
-7d  ██████░░░░   61%  ·  ⧗ Mon 12/30
+5h  █████████▌   95%  ·  ⧗ 00h 18m
+7d  ██████░░░░   61%  ·  ⧗ Mon 09:12
 ```
 
 색 가이드: 모델명은 **골드**, 폴더는 **샌드**, 브랜치는 **청록**, `+`스테이지는
 **골드**, `~`변경은 **코랄**. rate limit 행은 **사용량(%)**을 보여줘 창을
-소진할수록 게이지가 뜨거워집니다. `ctx`·`5h`·`7d`는 3칸 라벨로 정렬되며,
-5h·7d 행에는 리셋 시점(`⧗ Tue 14:00`)도 표시됩니다.
+소진할수록 게이지가 뜨거워집니다. 퍼센트 숫자도 게이지 채움 색과 같은 색
+(청록→빨강)으로 칠해집니다. `ctx`·`5h`·`7d`는 3칸 라벨로 정렬되며, 5h는
+**남은 시간**(`⧗ 04h 35m`), 7d는 **리셋 시점**(`⧗ Wed 15:47`)을 표시합니다.
 
 ### 요구 사항
 
@@ -95,8 +96,8 @@ ctx █████████▌   95%  ·  $0.88  ·  ⧗ 2h 11m 12s
 | `ctx ████▌░░░░░ 43%` | 컨텍스트 사용량 — 청록→빨강 그라데이션 게이지 |
 | `$0.21` | 세션 비용 |
 | `⧗ 9m 30s` | 경과 시간 |
-| `5h  ██████░░░░ 58% · ⧗ Tue 14:00` | 5시간 rate limit **사용량** + 리셋 시점 — Pro/Max |
-| `7d  ████░░░░░░ 40% · ⧗ Sun 12/24` | 7일 rate limit **사용량** + 리셋 시점 — Pro/Max |
+| `5h  ██████░░░░ 58% · ⧗ 04h 35m` | 5시간 rate limit **사용량** + 남은 시간 — Pro/Max |
+| `7d  ████░░░░░░ 40% · ⧗ Wed 15:47` | 7일 rate limit **사용량** + 리셋 시점 — Pro/Max |
 
 ### 커스터마이즈
 
@@ -147,21 +148,22 @@ ctx █░░░░░░░░░   10%  ·  $0.05  ·  ⧗ 2m 10s
 # Context 43% — with rate limits + reset countdown (Pro/Max)
 Opus 4.8 xhigh  my-app  feature/login +1 ~2
 ctx ████▌░░░░░   43%  ·  $0.21  ·  ⧗ 9m 30s
-5h  ██████░░░░   58%  ·  ⧗ Tue 14:00
-7d  ████░░░░░░   40%  ·  ⧗ Sun 12/24
+5h  ██████░░░░   58%  ·  ⧗ 04h 35m
+7d  ████░░░░░░   40%  ·  ⧗ Wed 15:47
 
 # Context 95% — nearly full
 Sonnet 4.6 high  my-app  hotfix ~5
 ctx █████████▌   95%  ·  $0.88  ·  ⧗ 2h 11m 12s
-5h  █████████▌   95%  ·  ⧗ Wed 09:05
-7d  ██████░░░░   61%  ·  ⧗ Mon 12/30
+5h  █████████▌   95%  ·  ⧗ 00h 18m
+7d  ██████░░░░   61%  ·  ⧗ Mon 09:12
 ```
 
 Color guide: model name is **gold**, folder **sand**, branch **turquoise**,
 `+`staged **gold**, `~`modified **coral**. The rate-limit rows show **% used**,
-so the gauge heats up as you burn the window down. `ctx`/`5h`/`7d` share a
-3-column label so they line up, and the 5h/7d rows show when the window
-resets (`⧗ Tue 14:00` for 5h, `⧗ Sun 12/24` for 7d).
+so the gauge heats up as you burn the window down. The percent number is tinted
+to its gauge's fill color (teal→red) too. `ctx`/`5h`/`7d` share a 3-column label
+so they line up; 5h shows **time remaining** (`⧗ 04h 35m`) while 7d shows its
+absolute **reset moment** (`⧗ Wed 15:47`).
 
 ### Requirements
 
@@ -212,8 +214,8 @@ Changes take effect on your next interaction.
 | `ctx ████▌░░░░░ 43%` | Context usage — turquoise→red gradient gauge |
 | `$0.21` | Session cost |
 | `⧗ 9m 30s` | Elapsed time |
-| `5h  ██████░░░░ 58% · ⧗ Tue 14:00` | 5-hour rate limit **usage** + reset time — Pro/Max |
-| `7d  ████░░░░░░ 40% · ⧗ Sun 12/24` | 7-day rate limit **usage** + reset time — Pro/Max |
+| `5h  ██████░░░░ 58% · ⧗ 04h 35m` | 5-hour rate limit **usage** + time remaining — Pro/Max |
+| `7d  ████░░░░░░ 40% · ⧗ Wed 15:47` | 7-day rate limit **usage** + reset time — Pro/Max |
 
 ### Customize
 
