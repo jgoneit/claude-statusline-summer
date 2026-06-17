@@ -43,7 +43,8 @@ case "${STATUSLINE_SUMMER_COLOR:-auto}" in
 esac
 
 # --- Summer palette (mode-appropriate) ------------------------------------
-# SUNSET / TRACK hold the bare SGR params (bar() wraps them in ESC [ ... m).
+# SUNSET holds the bare SGR params (bar() wraps them in ESC [ ... m); empty
+# cells reuse the same per-index color, dimmed, so the ramp is always present.
 # The 256 ramp is hand-picked for 10 distinct steps: teal -> seafoam -> sand
 # -> gold -> amber -> coral -> red. No auto-conversion, so no banding.
 if [ "$TRUECOLOR" -eq 1 ]; then
@@ -51,7 +52,6 @@ if [ "$TRUECOLOR" -eq 1 ]; then
     "38;2;46;196;182"  "38;2;91;202;191"  "38;2;154;217;201" "38;2;232;224;168" "38;2;255;212;91"
     "38;2;255;192;58"  "38;2;255;165;58"  "38;2;255;133;82"  "38;2;255;107;74"  "38;2;255;77;77"
   )
-  TRACK="38;2;56;66;76"
   C_MODEL=$'\033[38;2;255;212;91m'   # sun gold
   C_DIR=$'\033[38;2;234;217;176m'    # warm sand
   C_GIT=$'\033[38;2;46;196;182m'     # turquoise water
@@ -61,7 +61,6 @@ if [ "$TRUECOLOR" -eq 1 ]; then
 else
   SUNSET=( "38;5;43" "38;5;79" "38;5;115" "38;5;187" "38;5;223"
            "38;5;221" "38;5;215" "38;5;209" "38;5;203" "38;5;196" )
-  TRACK="38;5;238"
   C_MODEL=$'\033[38;5;221m'
   C_DIR=$'\033[38;5;187m'
   C_GIT=$'\033[38;5;43m'
@@ -108,21 +107,21 @@ bar() {
     n=$(( halves - i * 2 ))
     if   [ "$n" -ge 2 ]; then out="${out}${esc}[${SUNSET[$i]}m█"   # full
     elif [ "$n" -eq 1 ]; then out="${out}${esc}[${SUNSET[$i]}m▌"   # half = 5%
-    else                      out="${out}${esc}[${TRACK}m░"        # empty
+    else                      out="${out}${DIM}${esc}[${SUNSET[$i]}m░" # empty: dim gradient
     fi
   done
   printf '%s%s' "$out" "$RESET"
 }
 
-# === fmt_eta: seconds -> compact duration (3d4h / 2h13m / 47m) ===========
-fmt_eta() {
-  local s=$1
-  [ "$s" -lt 0 ] && s=0
-  local d=$((s/86400)) h=$(((s%86400)/3600)) m=$(((s%3600)/60))
-  if   [ "$d" -gt 0 ]; then printf '%dd%dh' "$d" "$h"
-  elif [ "$h" -gt 0 ]; then printf '%dh%dm' "$h" "$m"
-  else                      printf '%dm' "$m"
-  fi
+# === fmt_reset: epoch + strftime fmt -> local time, cross-platform date ===
+# resets_at is a Unix epoch (the jq parse floors it as a number). BSD date takes
+# `-r <epoch>`, GNU date takes `-d @<epoch>`; try BSD first, fall back to GNU
+# (GNU's `date -r` means "reference FILE", so it fails cleanly on a number).
+# LC_TIME=C forces English weekday abbreviations regardless of locale.
+fmt_reset() {
+  local epoch=$1 fmt=$2
+  LC_TIME=C date -r "$epoch" +"$fmt" 2>/dev/null || \
+  LC_TIME=C date -d "@$epoch" +"$fmt" 2>/dev/null
 }
 
 # === gauge_row: aligned "<label> <bar>  <pct>%  <trailing>" ===============
@@ -147,7 +146,7 @@ git_segment() {
 
   now=$(date +%s)
   if [ -f "$cache" ]; then
-    mtime=$(stat -f %m "$cache" 2>/dev/null || stat -c %Y "$cache" 2>/dev/null || echo 0)
+    mtime=$(stat -c %Y "$cache" 2>/dev/null || stat -f %m "$cache" 2>/dev/null || echo 0)
     [ $((now - mtime)) -le "$max_age" ] && stale=0
   fi
 
@@ -192,30 +191,35 @@ if [ -n "$GIT_BRANCH" ]; then
   [ "${GIT_MODIFIED:-0}" -gt 0 ] 2>/dev/null && GIT_DISPLAY="${GIT_DISPLAY} ${C_MOD}~${GIT_MODIFIED}${RESET}"
 fi
 
-# Cost + elapsed time + now (for reset countdowns)
+# Cost + elapsed time (h/m/s; hours shown only when >= 1h)
 COST_FMT=$(printf '$%.2f' "$COST")
 DURATION_SEC=$((DURATION_MS / 1000))
-MINS=$((DURATION_SEC / 60))
-SECS=$((DURATION_SEC % 60))
-NOW=$(date +%s)
+DUR_H=$((DURATION_SEC / 3600))
+DUR_M=$(((DURATION_SEC % 3600) / 60))
+DUR_S=$((DURATION_SEC % 60))
+if [ "$DUR_H" -gt 0 ]; then
+  DUR_FMT="${DUR_H}h ${DUR_M}m ${DUR_S}s"
+else
+  DUR_FMT="${DUR_M}m ${DUR_S}s"
+fi
 
 # --- Print (one printf == one row) ---------------------------------------
 # Row 1: identity
 printf '%s\n' "${C_MODEL}${MODEL}${RESET}${EFFORT_DISPLAY}  ${C_DIR}${DIR_NAME}${RESET}${GIT_DISPLAY}"
 
 # Row 2: context gauge + cost + time (ctx label aligns with 5h/7d below)
-gauge_row "ctx" "$USED" "  ${DIM}·${RESET}  ${C_STAGE}${COST_FMT}${RESET}  ${DIM}·${RESET}  ${C_MUTE}⧗ ${MINS}m ${SECS}s${RESET}"
+gauge_row "ctx" "$USED" "  ${DIM}·${RESET}  ${C_STAGE}${COST_FMT}${RESET}  ${DIM}·${RESET}  ${C_MUTE}⧗ ${DUR_FMT}${RESET}"
 
 # Rows 3-4: rate-limit gauges (Pro/Max only), same bar, aligned with ctx.
-# % USED (gauge heats up as you burn the window down) + time until reset.
+# % USED (gauge heats up as you burn the window down) + when the window resets.
 if [ -n "$RL5" ]; then
   t=""
-  [ -n "$RL5_RESET" ] && t="  ${DIM}·${RESET}  ${C_MUTE}⧗ $(fmt_eta $((RL5_RESET - NOW)))${RESET}"
+  [ -n "$RL5_RESET" ] && t="  ${DIM}·${RESET}  ${C_MUTE}⧗ $(fmt_reset "$RL5_RESET" '%a %H:%M')${RESET}"
   gauge_row "5h" "$RL5" "$t"
 fi
 if [ -n "$RL7" ]; then
   t=""
-  [ -n "$RL7_RESET" ] && t="  ${DIM}·${RESET}  ${C_MUTE}⧗ $(fmt_eta $((RL7_RESET - NOW)))${RESET}"
+  [ -n "$RL7_RESET" ] && t="  ${DIM}·${RESET}  ${C_MUTE}⧗ $(fmt_reset "$RL7_RESET" '%a %m/%d')${RESET}"
   gauge_row "7d" "$RL7" "$t"
 fi
 
