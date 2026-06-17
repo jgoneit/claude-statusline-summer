@@ -76,7 +76,7 @@ fi
 # rate limit would shift 7d into its slot); US never collapses. The separator
 # is passed to jq via --arg so there is no control char in the source. Rate
 # limits floor to an int, or become "" when absent (Pro/Max, after 1st reply).
-IFS="$US" read -r MODEL DIR USED REMAIN COST DURATION_MS SESSION_ID RL5 RL7 <<EOF
+IFS="$US" read -r MODEL DIR USED REMAIN COST DURATION_MS SESSION_ID RL5 RL7 EFFORT <<EOF
 $(printf '%s' "$input" | jq -j --arg sep "$US" '
   [ .model.display_name                              // "Claude",
     .workspace.current_dir                           // ".",
@@ -86,7 +86,8 @@ $(printf '%s' "$input" | jq -j --arg sep "$US" '
     .cost.total_duration_ms                          // 0,
     .session_id                                      // "nosession",
     (.rate_limits.five_hour.used_percentage | if type == "number" then floor else "" end),
-    (.rate_limits.seven_day.used_percentage | if type == "number" then floor else "" end)
+    (.rate_limits.seven_day.used_percentage | if type == "number" then floor else "" end),
+    (.effort.level // "")
   ] | map(tostring) | join($sep)')
 EOF
 
@@ -146,6 +147,20 @@ git_segment() {
 git_segment "$DIR" "$SESSION_ID"
 DIR_NAME="${DIR##*/}"
 
+# Effort level, just right of the model — color rises with intensity (summer heat).
+# Absent when the current model doesn't support the effort parameter.
+EFFORT_DISPLAY=""
+if [ -n "$EFFORT" ]; then
+  case "$EFFORT" in
+    low)       ec="$C_MUTE"  ;;
+    medium)    ec="$C_DIR"   ;;
+    high)      ec="$C_STAGE" ;;
+    xhigh|max) ec="$C_MOD"   ;;
+    *)         ec="$C_MUTE"  ;;
+  esac
+  EFFORT_DISPLAY=" ${ec}${EFFORT}${RESET}"
+fi
+
 # Git display (only inside a repo) — color does the work, no glyphs
 GIT_DISPLAY=""
 if [ -n "$GIT_BRANCH" ]; then
@@ -162,7 +177,7 @@ SECS=$((DURATION_SEC % 60))
 
 # --- Print (one printf == one row) ---------------------------------------
 # Row 1: identity
-printf '%s\n' "${C_MODEL}${MODEL}${RESET}  ${C_DIR}${DIR_NAME}${RESET}${GIT_DISPLAY}"
+printf '%s\n' "${C_MODEL}${MODEL}${RESET}${EFFORT_DISPLAY}  ${C_DIR}${DIR_NAME}${RESET}${GIT_DISPLAY}"
 
 # Row 2: context gauge + cost + time
 printf '%s\n' "$(bar "$USED")  ${USED}% ctx  ${DIM}·${RESET}  ${C_STAGE}${COST_FMT}${RESET}  ${DIM}·${RESET}  ${C_MUTE}${MINS}m ${SECS}s${RESET}"
