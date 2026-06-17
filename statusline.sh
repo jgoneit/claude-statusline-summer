@@ -210,12 +210,12 @@ gauge_row "ctx" "$USED" "  ${DIM}·${RESET}  ${C_STAGE}${COST_FMT}${RESET}  ${DI
 # % USED (gauge heats up as you burn the window down) + time until reset.
 if [ -n "$RL5" ]; then
   t=""
-  [ -n "$RL5_RESET" ] && t="  ${DIM}·${RESET}  ${C_MUTE}resets $(fmt_eta $((RL5_RESET - NOW)))${RESET}"
+  [ -n "$RL5_RESET" ] && t="  ${DIM}·${RESET}  ${C_MUTE}↻ $(fmt_eta $((RL5_RESET - NOW)))${RESET}"
   gauge_row "5h" "$RL5" "$t"
 fi
 if [ -n "$RL7" ]; then
   t=""
-  [ -n "$RL7_RESET" ] && t="  ${DIM}·${RESET}  ${C_MUTE}resets $(fmt_eta $((RL7_RESET - NOW)))${RESET}"
+  [ -n "$RL7_RESET" ] && t="  ${DIM}·${RESET}  ${C_MUTE}↻ $(fmt_eta $((RL7_RESET - NOW)))${RESET}"
   gauge_row "7d" "$RL7" "$t"
 fi
 
