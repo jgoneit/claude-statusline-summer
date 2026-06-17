@@ -160,17 +160,21 @@ git_segment() {
 
   if [ "$stale" -eq 1 ]; then
     if git -C "$dir" rev-parse --git-dir >/dev/null 2>&1; then
-      local b s m
+      local b s m ah bh
       b=$(git -C "$dir" branch --show-current 2>/dev/null)
       s=$(git -C "$dir" diff --cached --numstat 2>/dev/null | wc -l | tr -d ' ')
       m=$(git -C "$dir" diff --numstat 2>/dev/null | wc -l | tr -d ' ')
-      printf '%s\n' "${b}${US}${s}${US}${m}" > "$cache"
+      # ahead/behind vs upstream — empty when there's no upstream (@{u} errors,
+      # stderr silenced) so the row simply omits ↑/↓.
+      ah=$(git -C "$dir" rev-list --count @{u}..HEAD 2>/dev/null)
+      bh=$(git -C "$dir" rev-list --count HEAD..@{u} 2>/dev/null)
+      printf '%s\n' "${b}${US}${s}${US}${m}${US}${ah}${US}${bh}" > "$cache"
     else
-      printf '%s\n' "${US}${US}" > "$cache"   # mark "not a repo" so we don't re-check for 5s
+      printf '%s\n' "${US}${US}${US}${US}" > "$cache"   # not a repo: all fields empty
     fi
   fi
 
-  IFS="$US" read -r GIT_BRANCH GIT_STAGED GIT_MODIFIED < "$cache"
+  IFS="$US" read -r GIT_BRANCH GIT_STAGED GIT_MODIFIED GIT_AHEAD GIT_BEHIND < "$cache"
 }
 
 # --- Assemble ------------------------------------------------------------
@@ -197,6 +201,8 @@ if [ -n "$GIT_BRANCH" ]; then
   GIT_DISPLAY="  ${C_GIT}${GIT_BRANCH}${RESET}"
   [ "${GIT_STAGED:-0}"   -gt 0 ] 2>/dev/null && GIT_DISPLAY="${GIT_DISPLAY} ${C_STAGE}+${GIT_STAGED}${RESET}"
   [ "${GIT_MODIFIED:-0}" -gt 0 ] 2>/dev/null && GIT_DISPLAY="${GIT_DISPLAY} ${C_MOD}~${GIT_MODIFIED}${RESET}"
+  [ "${GIT_AHEAD:-0}"    -gt 0 ] 2>/dev/null && GIT_DISPLAY="${GIT_DISPLAY} ${C_GIT}↑${GIT_AHEAD}${RESET}"
+  [ "${GIT_BEHIND:-0}"   -gt 0 ] 2>/dev/null && GIT_DISPLAY="${GIT_DISPLAY} ${C_MOD}↓${GIT_BEHIND}${RESET}"
 fi
 
 # Cost + elapsed time (zero-padded HHh MMm, no seconds; hours always shown)
