@@ -204,18 +204,18 @@ NOW=$(date +%s)
 printf '%s\n' "${C_MODEL}${MODEL}${RESET}${EFFORT_DISPLAY}  ${C_DIR}${DIR_NAME}${RESET}${GIT_DISPLAY}"
 
 # Row 2: context gauge + cost + time (ctx label aligns with 5h/7d below)
-gauge_row "ctx" "$USED" "  ${DIM}·${RESET}  ${C_STAGE}${COST_FMT}${RESET}  ${DIM}·${RESET}  ${C_MUTE}${MINS}m ${SECS}s${RESET}"
+gauge_row "ctx" "$USED" "  ${DIM}·${RESET}  ${C_STAGE}${COST_FMT}${RESET}  ${DIM}·${RESET}  ${C_MUTE}⧗ ${MINS}m ${SECS}s${RESET}"
 
 # Rows 3-4: rate-limit gauges (Pro/Max only), same bar, aligned with ctx.
 # % USED (gauge heats up as you burn the window down) + time until reset.
 if [ -n "$RL5" ]; then
   t=""
-  [ -n "$RL5_RESET" ] && t="  ${DIM}·${RESET}  ${C_MUTE}↻ $(fmt_eta $((RL5_RESET - NOW)))${RESET}"
+  [ -n "$RL5_RESET" ] && t="  ${DIM}·${RESET}  ${C_MUTE}⧗ $(fmt_eta $((RL5_RESET - NOW)))${RESET}"
   gauge_row "5h" "$RL5" "$t"
 fi
 if [ -n "$RL7" ]; then
   t=""
-  [ -n "$RL7_RESET" ] && t="  ${DIM}·${RESET}  ${C_MUTE}↻ $(fmt_eta $((RL7_RESET - NOW)))${RESET}"
+  [ -n "$RL7_RESET" ] && t="  ${DIM}·${RESET}  ${C_MUTE}⧗ $(fmt_eta $((RL7_RESET - NOW)))${RESET}"
   gauge_row "7d" "$RL7" "$t"
 fi
 

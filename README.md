@@ -26,25 +26,25 @@ limit을 보여줍니다.
 ```
 # 컨텍스트 10% — 이른 세션 (rate limit 없음)
 Opus 4.8 high  my-app  main
-ctx █░░░░░░░░░   10%  ·  $0.05  ·  2m 10s
+ctx █░░░░░░░░░   10%  ·  $0.05  ·  ⧗ 2m 10s
 
 # 컨텍스트 43% — rate limit + 리셋 카운트다운 (Pro/Max)
 Opus 4.8 xhigh  my-app  feature/login +1 ~2
-ctx ████▌░░░░░   43%  ·  $0.21  ·  9m 30s
-5h  ██████░░░░   58%  ·  ↻ 2h13m
-7d  ████░░░░░░   40%  ·  ↻ 3d5h
+ctx ████▌░░░░░   43%  ·  $0.21  ·  ⧗ 9m 30s
+5h  ██████░░░░   58%  ·  ⧗ 2h13m
+7d  ████░░░░░░   40%  ·  ⧗ 3d5h
 
 # 컨텍스트 95% — 거의 가득
 Sonnet 4.6 high  my-app  hotfix ~5
-ctx █████████▌   95%  ·  $0.88  ·  31m 12s
-5h  █████████▌   95%  ·  ↻ 12m
-7d  ██████░░░░   61%  ·  ↻ 5d3h
+ctx █████████▌   95%  ·  $0.88  ·  ⧗ 31m 12s
+5h  █████████▌   95%  ·  ⧗ 12m
+7d  ██████░░░░   61%  ·  ⧗ 5d3h
 ```
 
 색 가이드: 모델명은 **골드**, 폴더는 **샌드**, 브랜치는 **청록**, `+`스테이지는
 **골드**, `~`변경은 **코랄**. rate limit 행은 **사용량(%)**을 보여줘 창을
 소진할수록 게이지가 뜨거워집니다. `ctx`·`5h`·`7d`는 3칸 라벨로 정렬되며,
-5h·7d 행에는 리셋까지 남은 시간(`↻ 2h13m`)도 표시됩니다.
+5h·7d 행에는 리셋까지 남은 시간(`⧗ 2h13m`)도 표시됩니다.
 
 ### 요구 사항
 
@@ -94,9 +94,9 @@ ctx █████████▌   95%  ·  $0.88  ·  31m 12s
 | `main +1 ~2` | git 브랜치(청록) + 스테이지(`+`, 골드) / 변경(`~`, 코랄) — 저장소 안에서만 |
 | `ctx ████▌░░░░░ 43%` | 컨텍스트 사용량 — 청록→빨강 그라데이션 게이지 |
 | `$0.21` | 세션 비용 |
-| `9m 30s` | 경과 시간 |
-| `5h  ██████░░░░ 58% · ↻ 2h13m` | 5시간 rate limit **사용량** + 리셋까지 남은 시간 — Pro/Max |
-| `7d  ████░░░░░░ 40% · ↻ 3d5h` | 7일 rate limit **사용량** + 리셋까지 남은 시간 — Pro/Max |
+| `⧗ 9m 30s` | 경과 시간 |
+| `5h  ██████░░░░ 58% · ⧗ 2h13m` | 5시간 rate limit **사용량** + 리셋까지 남은 시간 — Pro/Max |
+| `7d  ████░░░░░░ 40% · ⧗ 3d5h` | 7일 rate limit **사용량** + 리셋까지 남은 시간 — Pro/Max |
 
 ### 커스터마이즈
 
@@ -142,26 +142,26 @@ encodes "heat."
 ```
 # Context 10% — early in the session (no rate limits)
 Opus 4.8 high  my-app  main
-ctx █░░░░░░░░░   10%  ·  $0.05  ·  2m 10s
+ctx █░░░░░░░░░   10%  ·  $0.05  ·  ⧗ 2m 10s
 
 # Context 43% — with rate limits + reset countdown (Pro/Max)
 Opus 4.8 xhigh  my-app  feature/login +1 ~2
-ctx ████▌░░░░░   43%  ·  $0.21  ·  9m 30s
-5h  ██████░░░░   58%  ·  ↻ 2h13m
-7d  ████░░░░░░   40%  ·  ↻ 3d5h
+ctx ████▌░░░░░   43%  ·  $0.21  ·  ⧗ 9m 30s
+5h  ██████░░░░   58%  ·  ⧗ 2h13m
+7d  ████░░░░░░   40%  ·  ⧗ 3d5h
 
 # Context 95% — nearly full
 Sonnet 4.6 high  my-app  hotfix ~5
-ctx █████████▌   95%  ·  $0.88  ·  31m 12s
-5h  █████████▌   95%  ·  ↻ 12m
-7d  ██████░░░░   61%  ·  ↻ 5d3h
+ctx █████████▌   95%  ·  $0.88  ·  ⧗ 31m 12s
+5h  █████████▌   95%  ·  ⧗ 12m
+7d  ██████░░░░   61%  ·  ⧗ 5d3h
 ```
 
 Color guide: model name is **gold**, folder **sand**, branch **turquoise**,
 `+`staged **gold**, `~`modified **coral**. The rate-limit rows show **% used**,
 so the gauge heats up as you burn the window down. `ctx`/`5h`/`7d` share a
 3-column label so they line up, and the 5h/7d rows show time until reset
-(`↻ 2h13m`).
+(`⧗ 2h13m`).
 
 ### Requirements
 
@@ -211,9 +211,9 @@ Changes take effect on your next interaction.
 | `main +1 ~2` | git branch (turquoise) + staged (`+`, gold) / modified (`~`, coral) — inside a repo |
 | `ctx ████▌░░░░░ 43%` | Context usage — turquoise→red gradient gauge |
 | `$0.21` | Session cost |
-| `9m 30s` | Elapsed time |
-| `5h  ██████░░░░ 58% · ↻ 2h13m` | 5-hour rate limit **usage** + time until reset — Pro/Max |
-| `7d  ████░░░░░░ 40% · ↻ 3d5h` | 7-day rate limit **usage** + time until reset — Pro/Max |
+| `⧗ 9m 30s` | Elapsed time |
+| `5h  ██████░░░░ 58% · ⧗ 2h13m` | 5-hour rate limit **usage** + time until reset — Pro/Max |
+| `7d  ████░░░░░░ 40% · ⧗ 3d5h` | 7-day rate limit **usage** + time until reset — Pro/Max |
 
 ### Customize
 
