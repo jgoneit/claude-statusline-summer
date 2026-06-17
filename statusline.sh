@@ -137,9 +137,15 @@ fmt_remain() {
 gauge_row() {
   local label=$1 pct=$2 trailing=$3 labelpad pctpad idx esc=$'\033'
   printf -v labelpad '%-3s' "$label"
-  printf -v pctpad '%3d' "$pct"
-  idx=$((pct * 10 / 100)); [ "$idx" -gt 9 ] && idx=9   # pct -> fill color, like the bar
-  printf '%s\n' "${C_MUTE}${labelpad}${RESET} $(bar "$pct")  ${esc}[${SUNSET[$idx]}m${pctpad}%${RESET}${trailing}"
+  if [ -n "$pct" ]; then
+    printf -v pctpad '%3d' "$pct"
+    idx=$((pct * 10 / 100)); [ "$idx" -gt 9 ] && idx=9   # pct -> fill color, like the bar
+    printf '%s\n' "${C_MUTE}${labelpad}${RESET} $(bar "$pct")  ${esc}[${SUNSET[$idx]}m${pctpad}%${RESET}${trailing}"
+  else
+    # no data yet (before 1st API response): empty gauge + dim "--%" placeholder
+    printf -v pctpad '%3s' '--'
+    printf '%s\n' "${C_MUTE}${labelpad}${RESET} $(bar 0)  ${DIM}${pctpad}%${RESET}${trailing}"
+  fi
 }
 
 # === git_segment: branch + staged/modified, cached per session ===========
@@ -218,17 +224,21 @@ printf '%s\n' "${C_MODEL}${MODEL}${RESET}${EFFORT_DISPLAY}  ${C_DIR}${DIR_NAME}$
 # Row 2: context gauge + cost + time (ctx label aligns with 5h/7d below)
 gauge_row "ctx" "$USED" "  ${DIM}·${RESET}  ${C_STAGE}${COST_FMT}${RESET}  ${DIM}·${RESET}  ${C_MUTE}⧗ ${DUR_FMT}${RESET}"
 
-# Rows 3-4: rate-limit gauges (Pro/Max only), same bar, aligned with ctx.
-# % USED + 5h shows time REMAINING (countdown), 7d shows the absolute reset moment.
-if [ -n "$RL5" ]; then
-  t=""
-  [ -n "$RL5_RESET" ] && t="  ${DIM}·${RESET}  ${C_MUTE}⧗ $(fmt_remain $((RL5_RESET - NOW)))${RESET}"
-  gauge_row "5h" "$RL5" "$t"
+# Rows 3-4: rate-limit gauges — ALWAYS rendered so the layout is stable from the
+# start (placeholder before the first API response). % USED is fill-tinted; 5h
+# shows time REMAINING, 7d the absolute reset moment. Missing data shows dim "--"
+# (never a fake 0%/weekday). 5h and 7d judged independently, width-matched.
+if [ -n "$RL5_RESET" ]; then
+  t5="  ${DIM}·${RESET}  ${C_MUTE}⧗ $(fmt_remain $((RL5_RESET - NOW)))${RESET}"
+else
+  t5="  ${DIM}·${RESET}  ${DIM}⧗ --h --m${RESET}"
 fi
-if [ -n "$RL7" ]; then
-  t=""
-  [ -n "$RL7_RESET" ] && t="  ${DIM}·${RESET}  ${C_MUTE}⧗ $(fmt_reset "$RL7_RESET" '%a %H:%M')${RESET}"
-  gauge_row "7d" "$RL7" "$t"
+gauge_row "5h" "$RL5" "$t5"
+if [ -n "$RL7_RESET" ]; then
+  t7="  ${DIM}·${RESET}  ${C_MUTE}⧗ $(fmt_reset "$RL7_RESET" '%a %H:%M')${RESET}"
+else
+  t7="  ${DIM}·${RESET}  ${DIM}⧗ --- --:--${RESET}"
 fi
+gauge_row "7d" "$RL7" "$t7"
 
 exit 0
