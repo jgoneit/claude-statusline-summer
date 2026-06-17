@@ -199,17 +199,10 @@ if [ -n "$GIT_BRANCH" ]; then
   [ "${GIT_MODIFIED:-0}" -gt 0 ] 2>/dev/null && GIT_DISPLAY="${GIT_DISPLAY} ${C_MOD}~${GIT_MODIFIED}${RESET}"
 fi
 
-# Cost + elapsed time (h/m/s; hours shown only when >= 1h)
+# Cost + elapsed time (zero-padded HHh MMm, no seconds; hours always shown)
 COST_FMT=$(printf '$%.2f' "$COST")
 DURATION_SEC=$((DURATION_MS / 1000))
-DUR_H=$((DURATION_SEC / 3600))
-DUR_M=$(((DURATION_SEC % 3600) / 60))
-DUR_S=$((DURATION_SEC % 60))
-if [ "$DUR_H" -gt 0 ]; then
-  DUR_FMT="${DUR_H}h ${DUR_M}m ${DUR_S}s"
-else
-  DUR_FMT="${DUR_M}m ${DUR_S}s"
-fi
+printf -v DUR_FMT '%02dh %02dm' "$((DURATION_SEC / 3600))" "$(((DURATION_SEC % 3600) / 60))"
 NOW=$(date +%s)   # for the 5h "remaining" countdown
 
 # --- Print (one printf == one row) ---------------------------------------
