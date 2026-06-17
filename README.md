@@ -26,17 +26,17 @@ limit을 보여줍니다.
 ```
 # 컨텍스트 10% — 이른 세션 (rate limit 없음)
 Opus 4.8 high  my-app  main
-ctx █░░░░░░░░░   10%  ·  $0.05  ·  ⧗ 2m 10s
+ctx █░░░░░░░░░   10%  ·  $0.05  ·  ⧗ 00h 02m
 
 # 컨텍스트 43% — rate limit + 리셋 카운트다운 (Pro/Max)
 Opus 4.8 xhigh  my-app  feature/login +1 ~2
-ctx ████▌░░░░░   43%  ·  $0.21  ·  ⧗ 9m 30s
+ctx ████▌░░░░░   43%  ·  $0.21  ·  ⧗ 00h 09m
 5h  ██████░░░░   58%  ·  ⧗ 04h 35m
 7d  ████░░░░░░   40%  ·  ⧗ Wed 15:47
 
 # 컨텍스트 95% — 거의 가득
 Sonnet 4.6 high  my-app  hotfix ~5
-ctx █████████▌   95%  ·  $0.88  ·  ⧗ 2h 11m 12s
+ctx █████████▌   95%  ·  $0.88  ·  ⧗ 02h 11m
 5h  █████████▌   95%  ·  ⧗ 00h 18m
 7d  ██████░░░░   61%  ·  ⧗ Mon 09:12
 ```
@@ -95,7 +95,7 @@ ctx █████████▌   95%  ·  $0.88  ·  ⧗ 2h 11m 12s
 | `main +1 ~2` | git 브랜치(청록) + 스테이지(`+`, 골드) / 변경(`~`, 코랄) — 저장소 안에서만 |
 | `ctx ████▌░░░░░ 43%` | 컨텍스트 사용량 — 청록→빨강 그라데이션 게이지 |
 | `$0.21` | 세션 비용 |
-| `⧗ 9m 30s` | 경과 시간 |
+| `⧗ 00h 09m` | 경과 시간 |
 | `5h  ██████░░░░ 58% · ⧗ 04h 35m` | 5시간 rate limit **사용량** + 남은 시간 — Pro/Max |
 | `7d  ████░░░░░░ 40% · ⧗ Wed 15:47` | 7일 rate limit **사용량** + 리셋 시점 — Pro/Max |
 
@@ -143,17 +143,17 @@ encodes "heat."
 ```
 # Context 10% — early in the session (no rate limits)
 Opus 4.8 high  my-app  main
-ctx █░░░░░░░░░   10%  ·  $0.05  ·  ⧗ 2m 10s
+ctx █░░░░░░░░░   10%  ·  $0.05  ·  ⧗ 00h 02m
 
 # Context 43% — with rate limits + reset countdown (Pro/Max)
 Opus 4.8 xhigh  my-app  feature/login +1 ~2
-ctx ████▌░░░░░   43%  ·  $0.21  ·  ⧗ 9m 30s
+ctx ████▌░░░░░   43%  ·  $0.21  ·  ⧗ 00h 09m
 5h  ██████░░░░   58%  ·  ⧗ 04h 35m
 7d  ████░░░░░░   40%  ·  ⧗ Wed 15:47
 
 # Context 95% — nearly full
 Sonnet 4.6 high  my-app  hotfix ~5
-ctx █████████▌   95%  ·  $0.88  ·  ⧗ 2h 11m 12s
+ctx █████████▌   95%  ·  $0.88  ·  ⧗ 02h 11m
 5h  █████████▌   95%  ·  ⧗ 00h 18m
 7d  ██████░░░░   61%  ·  ⧗ Mon 09:12
 ```
@@ -213,7 +213,7 @@ Changes take effect on your next interaction.
 | `main +1 ~2` | git branch (turquoise) + staged (`+`, gold) / modified (`~`, coral) — inside a repo |
 | `ctx ████▌░░░░░ 43%` | Context usage — turquoise→red gradient gauge |
 | `$0.21` | Session cost |
-| `⧗ 9m 30s` | Elapsed time |
+| `⧗ 00h 09m` | Elapsed time |
 | `5h  ██████░░░░ 58% · ⧗ 04h 35m` | 5-hour rate limit **usage** + time remaining — Pro/Max |
 | `7d  ████░░░░░░ 40% · ⧗ Wed 15:47` | 7-day rate limit **usage** + reset time — Pro/Max |
 
