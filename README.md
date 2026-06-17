@@ -29,7 +29,7 @@ Opus 4.8 high  my-app  main
 ctx █░░░░░░░░░   10%  ·  $0.05  ·  ⧗ 00h 02m
 
 # 컨텍스트 43% — rate limit + 리셋 카운트다운 (Pro/Max)
-Opus 4.8 xhigh  my-app  feature/login +1 ~2
+Opus 4.8 xhigh  my-app  feature/login +1 ~2 ↑1 ↓3
 ctx ████▌░░░░░   43%  ·  $0.21  ·  ⧗ 00h 09m
 5h  ██████░░░░   58%  ·  ⧗ 04h 35m
 7d  ████░░░░░░   40%  ·  ⧗ Wed 15:47
@@ -92,7 +92,7 @@ ctx █████████▌   95%  ·  $0.88  ·  ⧗ 02h 11m
 | `Opus 4.8` | 현재 Claude 모델 (골드) |
 | `xhigh` | 모델 오른쪽의 추론 effort (low→max) — 강도에 따라 색이 진해짐. 미지원 모델에선 생략 |
 | `my-app` | 현재 폴더 이름 (샌드) |
-| `main +1 ~2` | git 브랜치(청록) + 스테이지(`+`, 골드) / 변경(`~`, 코랄) — 저장소 안에서만 |
+| `main +1 ~2 ↑1 ↓3` | git 브랜치(청록) + 스테이지(`+`, 골드) / 변경(`~`, 코랄) / upstream 대비 ahead(`↑`, 청록) · behind(`↓`, 코랄) — 저장소 안에서만 |
 | `ctx ████▌░░░░░ 43%` | 컨텍스트 사용량 — 청록→빨강 그라데이션 게이지 |
 | `$0.21` | 세션 비용 |
 | `⧗ 00h 09m` | 경과 시간 |
@@ -146,7 +146,7 @@ Opus 4.8 high  my-app  main
 ctx █░░░░░░░░░   10%  ·  $0.05  ·  ⧗ 00h 02m
 
 # Context 43% — with rate limits + reset countdown (Pro/Max)
-Opus 4.8 xhigh  my-app  feature/login +1 ~2
+Opus 4.8 xhigh  my-app  feature/login +1 ~2 ↑1 ↓3
 ctx ████▌░░░░░   43%  ·  $0.21  ·  ⧗ 00h 09m
 5h  ██████░░░░   58%  ·  ⧗ 04h 35m
 7d  ████░░░░░░   40%  ·  ⧗ Wed 15:47
@@ -210,7 +210,7 @@ Changes take effect on your next interaction.
 | `Opus 4.8` | Current Claude model (gold) |
 | `xhigh` | Reasoning effort, right of the model (low→max) — color deepens with intensity; omitted on models without it |
 | `my-app` | Current folder name (sand) |
-| `main +1 ~2` | git branch (turquoise) + staged (`+`, gold) / modified (`~`, coral) — inside a repo |
+| `main +1 ~2 ↑1 ↓3` | git branch (turquoise) + staged (`+`, gold) / modified (`~`, coral) / ahead (`↑`, turquoise) · behind (`↓`, coral) vs upstream — inside a repo |
 | `ctx ████▌░░░░░ 43%` | Context usage — turquoise→red gradient gauge |
 | `$0.21` | Session cost |
 | `⧗ 00h 09m` | Elapsed time |
