@@ -25,16 +25,16 @@ limit을 보여줍니다.
 
 ```
 # 컨텍스트 10% — 이른 세션
-Opus 4.8  my-app  main
+Opus 4.8 high  my-app  main
 █░░░░░░░░░  10% ctx  ·  $0.05  ·  2m 10s
 
 # 컨텍스트 43% — rate limit 표시 (Pro/Max)
-Opus 4.8  my-app  feature/login +1 ~2
+Opus 4.8 xhigh  my-app  feature/login +1 ~2
 ████▌░░░░░  43% ctx  ·  $0.21  ·  9m 30s
 5h ██████░░░░ 58%   ·   7d ████░░░░░░ 40%
 
 # 컨텍스트 95% — 거의 가득
-Sonnet 4.6  my-app  hotfix ~5
+Sonnet 4.6 high  my-app  hotfix ~5
 █████████▌  95% ctx  ·  $0.88  ·  31m 12s
 5h █████████▌ 95%   ·   7d ██████░░░░ 61%
 ```
@@ -86,6 +86,7 @@ Sonnet 4.6  my-app  hotfix ~5
 | 항목 | 설명 |
 |------|------|
 | `Opus 4.8` | 현재 Claude 모델 (골드) |
+| `xhigh` | 모델 오른쪽의 추론 effort (low→max) — 강도에 따라 색이 진해짐. 미지원 모델에선 생략 |
 | `my-app` | 현재 폴더 이름 (샌드) |
 | `main +1 ~2` | git 브랜치(청록) + 스테이지(`+`, 골드) / 변경(`~`, 코랄) — 저장소 안에서만 |
 | `████▌░░░░░ 43% ctx` | 컨텍스트 사용량 — 청록→빨강 그라데이션 게이지 |
@@ -137,16 +138,16 @@ encodes "heat."
 
 ```
 # Context 10% — early in the session
-Opus 4.8  my-app  main
+Opus 4.8 high  my-app  main
 █░░░░░░░░░  10% ctx  ·  $0.05  ·  2m 10s
 
 # Context 43% — with rate limits (Pro/Max)
-Opus 4.8  my-app  feature/login +1 ~2
+Opus 4.8 xhigh  my-app  feature/login +1 ~2
 ████▌░░░░░  43% ctx  ·  $0.21  ·  9m 30s
 5h ██████░░░░ 58%   ·   7d ████░░░░░░ 40%
 
 # Context 95% — nearly full
-Sonnet 4.6  my-app  hotfix ~5
+Sonnet 4.6 high  my-app  hotfix ~5
 █████████▌  95% ctx  ·  $0.88  ·  31m 12s
 5h █████████▌ 95%   ·   7d ██████░░░░ 61%
 ```
@@ -198,6 +199,7 @@ Changes take effect on your next interaction.
 | Section | Description |
 |---------|-------------|
 | `Opus 4.8` | Current Claude model (gold) |
+| `xhigh` | Reasoning effort, right of the model (low→max) — color deepens with intensity; omitted on models without it |
 | `my-app` | Current folder name (sand) |
 | `main +1 ~2` | git branch (turquoise) + staged (`+`, gold) / modified (`~`, coral) — inside a repo |
 | `████▌░░░░░ 43% ctx` | Context usage — turquoise→red gradient gauge |
