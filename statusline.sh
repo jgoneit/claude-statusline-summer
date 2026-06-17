@@ -76,7 +76,7 @@ fi
 # rate limit would shift 7d into its slot); US never collapses. The separator
 # is passed to jq via --arg so there is no control char in the source. Rate
 # limits floor to an int, or become "" when absent (Pro/Max, after 1st reply).
-IFS="$US" read -r MODEL DIR USED REMAIN COST DURATION_MS SESSION_ID RL5 RL7 EFFORT <<EOF
+IFS="$US" read -r MODEL DIR USED REMAIN COST DURATION_MS SESSION_ID RL5 RL7 EFFORT RL5_RESET RL7_RESET <<EOF
 $(printf '%s' "$input" | jq -j --arg sep "$US" '
   [ .model.display_name                              // "Claude",
     .workspace.current_dir                           // ".",
@@ -87,7 +87,9 @@ $(printf '%s' "$input" | jq -j --arg sep "$US" '
     .session_id                                      // "nosession",
     (.rate_limits.five_hour.used_percentage | if type == "number" then floor else "" end),
     (.rate_limits.seven_day.used_percentage | if type == "number" then floor else "" end),
-    (.effort.level // "")
+    (.effort.level // ""),
+    (.rate_limits.five_hour.resets_at | if type == "number" then floor else "" end),
+    (.rate_limits.seven_day.resets_at | if type == "number" then floor else "" end)
   ] | map(tostring) | join($sep)')
 EOF
 
@@ -110,6 +112,27 @@ bar() {
     fi
   done
   printf '%s%s' "$out" "$RESET"
+}
+
+# === fmt_eta: seconds -> compact duration (3d4h / 2h13m / 47m) ===========
+fmt_eta() {
+  local s=$1
+  [ "$s" -lt 0 ] && s=0
+  local d=$((s/86400)) h=$(((s%86400)/3600)) m=$(((s%3600)/60))
+  if   [ "$d" -gt 0 ]; then printf '%dd%dh' "$d" "$h"
+  elif [ "$h" -gt 0 ]; then printf '%dh%dm' "$h" "$m"
+  else                      printf '%dm' "$m"
+  fi
+}
+
+# === gauge_row: aligned "<label> <bar>  <pct>%  <trailing>" ===============
+# Label left-padded to 3 cols and pct right-aligned to 3 so ctx/5h/7d line up.
+# `trailing` is pre-formatted (may be empty) and already includes its separator.
+gauge_row() {
+  local label=$1 pct=$2 trailing=$3 labelpad pctpad
+  printf -v labelpad '%-3s' "$label"
+  printf -v pctpad '%3d' "$pct"
+  printf '%s\n' "${C_MUTE}${labelpad}${RESET} $(bar "$pct")  ${pctpad}%${trailing}"
 }
 
 # === git_segment: branch + staged/modified, cached per session ===========
@@ -169,26 +192,31 @@ if [ -n "$GIT_BRANCH" ]; then
   [ "${GIT_MODIFIED:-0}" -gt 0 ] 2>/dev/null && GIT_DISPLAY="${GIT_DISPLAY} ${C_MOD}~${GIT_MODIFIED}${RESET}"
 fi
 
-# Cost + elapsed time
+# Cost + elapsed time + now (for reset countdowns)
 COST_FMT=$(printf '$%.2f' "$COST")
 DURATION_SEC=$((DURATION_MS / 1000))
 MINS=$((DURATION_SEC / 60))
 SECS=$((DURATION_SEC % 60))
+NOW=$(date +%s)
 
 # --- Print (one printf == one row) ---------------------------------------
 # Row 1: identity
 printf '%s\n' "${C_MODEL}${MODEL}${RESET}${EFFORT_DISPLAY}  ${C_DIR}${DIR_NAME}${RESET}${GIT_DISPLAY}"
 
-# Row 2: context gauge + cost + time
-printf '%s\n' "$(bar "$USED")  ${USED}% ctx  ${DIM}·${RESET}  ${C_STAGE}${COST_FMT}${RESET}  ${DIM}·${RESET}  ${C_MUTE}${MINS}m ${SECS}s${RESET}"
+# Row 2: context gauge + cost + time (ctx label aligns with 5h/7d below)
+gauge_row "ctx" "$USED" "  ${DIM}·${RESET}  ${C_STAGE}${COST_FMT}${RESET}  ${DIM}·${RESET}  ${C_MUTE}${MINS}m ${SECS}s${RESET}"
 
-# Row 3: rate-limit gauges, same bar — only when present (Pro/Max).
-# Shows % USED so the gauge heats up as you burn the window down.
-if [ -n "$RL5" ] || [ -n "$RL7" ]; then
-  RL_LINE=""
-  [ -n "$RL5" ] && RL_LINE="${C_MUTE}5h${RESET} $(bar "$RL5") ${RL5}%"
-  [ -n "$RL7" ] && RL_LINE="${RL_LINE:+$RL_LINE   ${DIM}·${RESET}   }${C_MUTE}7d${RESET} $(bar "$RL7") ${RL7}%"
-  printf '%s\n' "$RL_LINE"
+# Rows 3-4: rate-limit gauges (Pro/Max only), same bar, aligned with ctx.
+# % USED (gauge heats up as you burn the window down) + time until reset.
+if [ -n "$RL5" ]; then
+  t=""
+  [ -n "$RL5_RESET" ] && t="  ${DIM}·${RESET}  ${C_MUTE}resets $(fmt_eta $((RL5_RESET - NOW)))${RESET}"
+  gauge_row "5h" "$RL5" "$t"
+fi
+if [ -n "$RL7" ]; then
+  t=""
+  [ -n "$RL7_RESET" ] && t="  ${DIM}·${RESET}  ${C_MUTE}resets $(fmt_eta $((RL7_RESET - NOW)))${RESET}"
+  gauge_row "7d" "$RL7" "$t"
 fi
 
 exit 0
