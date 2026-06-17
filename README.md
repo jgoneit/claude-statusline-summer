@@ -24,9 +24,11 @@ limit을 보여줍니다.
 > 단위입니다.
 
 ```
-# 컨텍스트 10% — 이른 세션 (rate limit 없음)
+# 컨텍스트 10% — 이른 세션 (rate limit 아직 없음 → 플레이스홀더)
 Opus 4.8 high  my-app  main
 ctx █░░░░░░░░░   10%  ·  $0.05  ·  ⧗ 00h 02m
+5h  ░░░░░░░░░░   --%  ·  ⧗ --h --m
+7d  ░░░░░░░░░░   --%  ·  ⧗ --- --:--
 
 # 컨텍스트 43% — rate limit + 리셋 카운트다운 (Pro/Max)
 Opus 4.8 xhigh  my-app  feature/login +1 ~2 ↑1 ↓3
@@ -46,6 +48,7 @@ ctx █████████▌   95%  ·  $0.88  ·  ⧗ 02h 11m
 소진할수록 게이지가 뜨거워집니다. 퍼센트 숫자도 게이지 채움 색과 같은 색
 (청록→빨강)으로 칠해집니다. `ctx`·`5h`·`7d`는 3칸 라벨로 정렬되며, 5h는
 **남은 시간**(`⧗ 04h 35m`), 7d는 **리셋 시점**(`⧗ Wed 15:47`)을 표시합니다.
+첫 응답 전에는 5h·7d 줄이 흐린 `--` 플레이스홀더로 항상 떠서 레이아웃이 안 들썩입니다.
 
 ### 요구 사항
 
@@ -141,9 +144,11 @@ encodes "heat."
 > can't show color, so read the **fill level** only. A half-block (▌) is 5%.
 
 ```
-# Context 10% — early in the session (no rate limits)
+# Context 10% — early in the session (rate limits not yet available → placeholder)
 Opus 4.8 high  my-app  main
 ctx █░░░░░░░░░   10%  ·  $0.05  ·  ⧗ 00h 02m
+5h  ░░░░░░░░░░   --%  ·  ⧗ --h --m
+7d  ░░░░░░░░░░   --%  ·  ⧗ --- --:--
 
 # Context 43% — with rate limits + reset countdown (Pro/Max)
 Opus 4.8 xhigh  my-app  feature/login +1 ~2 ↑1 ↓3
@@ -163,7 +168,8 @@ Color guide: model name is **gold**, folder **sand**, branch **turquoise**,
 so the gauge heats up as you burn the window down. The percent number is tinted
 to its gauge's fill color (teal→red) too. `ctx`/`5h`/`7d` share a 3-column label
 so they line up; 5h shows **time remaining** (`⧗ 04h 35m`) while 7d shows its
-absolute **reset moment** (`⧗ Wed 15:47`).
+absolute **reset moment** (`⧗ Wed 15:47`). Before the first response both rows
+are always drawn as a dim `--` placeholder, so the layout never jumps.
 
 ### Requirements
 
