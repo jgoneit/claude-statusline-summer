@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+
+# install.sh settings.json backups (in case you test inside the repo)
+settings.json.bak.*
+*.bak.*
+
+# Node (reserved for future npx packaging)
+node_modules/
+npm-debug.log*
+
+# Local Claude Code config — machine-specific, never shipped
+.claude/
+CLAUDE.md

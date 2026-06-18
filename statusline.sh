@@ -1,27 +1,28 @@
 #!/bin/bash
 #
-# claude-statusline-summer — a summer-themed Claude Code status line.
+# claude-statusline — a themeable Claude Code status line.
 #
 # Claude Code pipes session JSON to this script on stdin and renders whatever
 # we print to stdout (one row per line). Contract:
 #   https://code.claude.com/docs/en/statusline
 #
-# The "summer" feeling is carried by COLOR, not emoji: a sunset gradient gauge
-# (calm turquoise -> blazing red) reused for context usage AND the 5h/7d rate
-# limits.
+# The look is carried by COLOR, not emoji: a gradient gauge reused for context
+# usage AND the 5h/7d rate limits. The palette comes from a theme — a thin
+# colour-only file in themes/<name>/colors.sh. Pick one with:
+#   export STATUSLINE_THEME=summer        # default; christmas is a scaffold
 #
 # COLOR DEPTH — auto-detected, with a curated 256-color fallback so the
 # gradient never bands on terminals without 24-bit color (e.g. Apple
 # Terminal.app). Force a mode if detection is wrong:
-#   export STATUSLINE_SUMMER_COLOR=truecolor   # or: 256
+#   export STATUSLINE_COLOR=truecolor     # or: 256  (legacy STATUSLINE_SUMMER_COLOR still works)
 # Inside tmux, truecolor also needs:  set -ga terminal-overrides ",*:Tc"
 #
 # Requires: jq.
 #
-# Test both palettes with mock input:
-#   m='{"model":{"display_name":"Opus 4.8"},"workspace":{"current_dir":"/x/summer"},"context_window":{"used_percentage":62},"session_id":"t"}'
-#   echo "$m" | STATUSLINE_SUMMER_COLOR=truecolor ./statusline.sh
-#   echo "$m" | STATUSLINE_SUMMER_COLOR=256       ./statusline.sh
+# Test with mock input:
+#   m='{"model":{"display_name":"Opus 4.8"},"workspace":{"current_dir":"/x"},"context_window":{"used_percentage":62},"session_id":"t"}'
+#   echo "$m" | STATUSLINE_COLOR=truecolor ./statusline.sh
+#   echo "$m" | STATUSLINE_COLOR=256       ./statusline.sh
 
 input=$(cat)
 
@@ -32,7 +33,7 @@ US=$'\x1f'   # Unit Separator: a NON-whitespace field delimiter for `read`
 # --- Detect color depth ---------------------------------------------------
 # Positive confirmation -> truecolor; otherwise fall back to 256 (safe almost
 # everywhere). An explicit override always wins.
-case "${STATUSLINE_SUMMER_COLOR:-auto}" in
+case "${STATUSLINE_COLOR:-${STATUSLINE_SUMMER_COLOR:-auto}}" in
   truecolor|24bit) TRUECOLOR=1 ;;
   256|ansi)        TRUECOLOR=0 ;;
   *)
@@ -42,32 +43,25 @@ case "${STATUSLINE_SUMMER_COLOR:-auto}" in
     esac ;;
 esac
 
-# --- Summer palette (mode-appropriate) ------------------------------------
-# SUNSET holds the bare SGR params (bar() wraps them in ESC [ ... m); empty
-# cells reuse the same per-index color, dimmed, so the ramp is always present.
-# The 256 ramp is hand-picked for 10 distinct steps: teal -> seafoam -> sand
-# -> gold -> amber -> coral -> red. No auto-conversion, so no banding.
-if [ "$TRUECOLOR" -eq 1 ]; then
-  SUNSET=(
-    "38;2;46;196;182"  "38;2;91;202;191"  "38;2;154;217;201" "38;2;232;224;168" "38;2;255;212;91"
-    "38;2;255;192;58"  "38;2;255;165;58"  "38;2;255;133;82"  "38;2;255;107;74"  "38;2;255;77;77"
-  )
-  C_MODEL=$'\033[38;2;255;212;91m'   # sun gold
-  C_DIR=$'\033[38;2;234;217;176m'    # warm sand
-  C_GIT=$'\033[38;2;46;196;182m'     # turquoise water
-  C_STAGE=$'\033[38;2;255;212;91m'   # gold
-  C_MOD=$'\033[38;2;255;133;82m'     # coral
-  C_MUTE=$'\033[38;2;138;151;161m'   # faded
-else
-  SUNSET=( "38;5;43" "38;5;79" "38;5;115" "38;5;187" "38;5;223"
-           "38;5;221" "38;5;215" "38;5;209" "38;5;203" "38;5;196" )
-  C_MODEL=$'\033[38;5;221m'
-  C_DIR=$'\033[38;5;187m'
-  C_GIT=$'\033[38;5;43m'
-  C_STAGE=$'\033[38;5;221m'
-  C_MOD=$'\033[38;5;209m'
-  C_MUTE=$'\033[38;5;102m'
-fi
+# --- Load the selected theme's palette ------------------------------------
+# A theme is COLOUR ONLY: themes/<name>/colors.sh defines SUNSET (10 gradient
+# stops) and the C_* accents for the colour depth detected above. The engine
+# below is theme-agnostic. STATUSLINE_THEME picks the theme (default: summer);
+# an unknown name falls back to summer so the status line never blanks.
+# Resolve symlinks so SCRIPT_DIR is the script's REAL dir (themes/ lives next to it).
+# Installs symlink ~/.claude/statusline.sh -> this file; dirname doesn't follow links,
+# so without this SCRIPT_DIR points at ~/.claude (no themes/) and the palette source
+# silently fails -> colours vanish. macOS = bash 3.2 / BSD readlink (no `readlink -f`).
+src="${BASH_SOURCE[0]}"
+while [ -L "$src" ]; do
+  dir="$(cd -P "$(dirname "$src")" && pwd)"
+  src="$(readlink "$src")"
+  case $src in /*) ;; *) src="$dir/$src" ;; esac   # relative target -> absolute
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$src")" && pwd)"
+THEME="${STATUSLINE_THEME:-summer}"
+[ -f "$SCRIPT_DIR/themes/$THEME/colors.sh" ] || THEME=summer
+. "$SCRIPT_DIR/themes/$THEME/colors.sh"
 
 # --- Parse every field we need in a single jq pass ------------------------
 # One `read`, split on US (0x1f) — a NON-whitespace delimiter. A tab is
@@ -91,6 +85,15 @@ $(printf '%s' "$input" | jq -j --arg sep "$US" '
     (.rate_limits.seven_day.resets_at | if type == "number" then floor else "" end)
   ] | map(tostring) | join($sep)')
 EOF
+
+# --- Demo override: STATUSLINE_DEMO_PCT -----------------------------------
+# For screenshots of any theme at an arbitrary fill: when set to a whole number,
+# every gauge (ctx, 5h, 7d) renders at that percent instead of real session data.
+# Non-numeric/empty is ignored; bar() clamps to 0-100 so out-of-range is harmless.
+case "${STATUSLINE_DEMO_PCT:-}" in
+  ''|*[!0-9]*) ;;
+  *) USED=$STATUSLINE_DEMO_PCT; RL5=$STATUSLINE_DEMO_PCT; RL7=$STATUSLINE_DEMO_PCT ;;
+esac
 
 # === bar: the one gauge to rule them all =================================
 # A percentage (0-100 int) -> a 10-cell sunset gradient bar with half-cell
@@ -154,7 +157,7 @@ gauge_row() {
 # 5s TTL. Sets GIT_BRANCH / GIT_STAGED / GIT_MODIFIED.
 git_segment() {
   local dir=$1 sid=$2
-  local cache="/tmp/statusline-summer-$sid"
+  local cache="/tmp/statusline-$sid"
   local max_age=5
   local now mtime stale=1
 
