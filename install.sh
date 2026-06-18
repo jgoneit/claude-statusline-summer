@@ -4,7 +4,7 @@
 #
 # What it does:
 #   1. checks for jq
-#   2. copies statusline.sh -> ~/.claude/statusline.sh (+ executable)
+#   2. copies statusline.sh + themes/ -> ~/.claude/ (statusline.sh executable)
 #   3. backs up ~/.claude/settings.json, then merges in the statusLine entry
 #      (if a statusLine already exists, it shows it and asks before replacing)
 #
@@ -18,6 +18,7 @@ set -euo pipefail
 # --- locate things --------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SRC="$SCRIPT_DIR/statusline.sh"
+THEMES_SRC="$SCRIPT_DIR/themes"
 CLAUDE_DIR="$HOME/.claude"
 DEST="$CLAUDE_DIR/statusline.sh"
 SETTINGS="$CLAUDE_DIR/settings.json"
@@ -43,11 +44,20 @@ if [ ! -f "$SRC" ]; then
   exit 1
 fi
 
-# --- 2. install the script ------------------------------------------------
+if [ ! -f "$THEMES_SRC/summer/colors.sh" ]; then
+  c_err "themes/ not found next to this installer ($THEMES_SRC)."
+  exit 1
+fi
+
+# --- 2. install the script + themes ---------------------------------------
+# statusline.sh resolves its own dir and sources themes/<name>/colors.sh, so the
+# themes tree must sit beside it in ~/.claude. cp -R never deletes, so re-running
+# just refreshes the theme files.
 mkdir -p "$CLAUDE_DIR"
 cp "$SRC" "$DEST"
 chmod +x "$DEST"
-c_ok "Installed statusline.sh -> $DEST"
+cp -R "$THEMES_SRC" "$CLAUDE_DIR/"
+c_ok "Installed statusline.sh + themes/ -> $CLAUDE_DIR"
 
 # --- 3. merge settings.json ----------------------------------------------
 NEW_STATUSLINE=$(jq -n --arg cmd "$DEST" '{type: "command", command: $cmd}')
