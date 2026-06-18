@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# claude-statusline-summer installer
+# claude-statusline installer
 #
 # What it does:
 #   1. checks for jq
@@ -68,7 +68,7 @@ EXISTING=$(jq '.statusLine // empty' "$SETTINGS")
 if [ -n "$EXISTING" ]; then
   c_warn "An existing statusLine was found in $SETTINGS:"
   printf '%s\n' "$EXISTING" | jq .
-  printf 'Replace it with claude-statusline-summer? [y/N] '
+  printf 'Replace it with claude-statusline? [y/N] '
   read -r reply
   case "$reply" in
     [yY]|[yY][eE][sS]) ;;
@@ -88,5 +88,5 @@ TMP=$(mktemp)
 jq --argjson sl "$NEW_STATUSLINE" '.statusLine = $sl' "$SETTINGS" > "$TMP"
 mv "$TMP" "$SETTINGS"
 
-c_ok "Done. claude-statusline-summer is now your Claude Code status line."
+c_ok "Done. claude-statusline is now your Claude Code status line."
 c_info "Open a Claude Code session to see it. To undo, restore: $BACKUP"

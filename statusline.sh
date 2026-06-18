@@ -1,27 +1,28 @@
 #!/bin/bash
 #
-# claude-statusline-summer — a summer-themed Claude Code status line.
+# claude-statusline — a themeable Claude Code status line.
 #
 # Claude Code pipes session JSON to this script on stdin and renders whatever
 # we print to stdout (one row per line). Contract:
 #   https://code.claude.com/docs/en/statusline
 #
-# The "summer" feeling is carried by COLOR, not emoji: a sunset gradient gauge
-# (calm turquoise -> blazing red) reused for context usage AND the 5h/7d rate
-# limits.
+# The look is carried by COLOR, not emoji: a gradient gauge reused for context
+# usage AND the 5h/7d rate limits. The palette comes from a theme — a thin
+# colour-only file in themes/<name>/colors.sh. Pick one with:
+#   export STATUSLINE_THEME=summer        # default; christmas is a scaffold
 #
 # COLOR DEPTH — auto-detected, with a curated 256-color fallback so the
 # gradient never bands on terminals without 24-bit color (e.g. Apple
 # Terminal.app). Force a mode if detection is wrong:
-#   export STATUSLINE_SUMMER_COLOR=truecolor   # or: 256
+#   export STATUSLINE_COLOR=truecolor     # or: 256  (legacy STATUSLINE_SUMMER_COLOR still works)
 # Inside tmux, truecolor also needs:  set -ga terminal-overrides ",*:Tc"
 #
 # Requires: jq.
 #
-# Test both palettes with mock input:
-#   m='{"model":{"display_name":"Opus 4.8"},"workspace":{"current_dir":"/x/summer"},"context_window":{"used_percentage":62},"session_id":"t"}'
-#   echo "$m" | STATUSLINE_SUMMER_COLOR=truecolor ./statusline.sh
-#   echo "$m" | STATUSLINE_SUMMER_COLOR=256       ./statusline.sh
+# Test with mock input:
+#   m='{"model":{"display_name":"Opus 4.8"},"workspace":{"current_dir":"/x"},"context_window":{"used_percentage":62},"session_id":"t"}'
+#   echo "$m" | STATUSLINE_COLOR=truecolor ./statusline.sh
+#   echo "$m" | STATUSLINE_COLOR=256       ./statusline.sh
 
 input=$(cat)
 
@@ -32,7 +33,7 @@ US=$'\x1f'   # Unit Separator: a NON-whitespace field delimiter for `read`
 # --- Detect color depth ---------------------------------------------------
 # Positive confirmation -> truecolor; otherwise fall back to 256 (safe almost
 # everywhere). An explicit override always wins.
-case "${STATUSLINE_SUMMER_COLOR:-auto}" in
+case "${STATUSLINE_COLOR:-${STATUSLINE_SUMMER_COLOR:-auto}}" in
   truecolor|24bit) TRUECOLOR=1 ;;
   256|ansi)        TRUECOLOR=0 ;;
   *)
@@ -146,7 +147,7 @@ gauge_row() {
 # 5s TTL. Sets GIT_BRANCH / GIT_STAGED / GIT_MODIFIED.
 git_segment() {
   local dir=$1 sid=$2
-  local cache="/tmp/statusline-summer-$sid"
+  local cache="/tmp/statusline-$sid"
   local max_age=5
   local now mtime stale=1
 
