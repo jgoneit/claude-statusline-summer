@@ -1,25 +1,22 @@
-# claude-statusline-summer
+# 🌅 claude-statusline-summer
 
-> A summer-themed status line for [Claude Code](https://code.claude.com/) — the theme lives in the color, not in emoji.
+> A summer-themed status line for [Claude Code](https://code.claude.com/) — the theme lives in the **color**, not in emoji.
 
 **English** | [한국어](./README.ko.md)
 
 ![claude-statusline-summer](./docs/claude-statusline-summer.png)
 
-Shows your model, folder, git status, context-window usage, session cost/time,
-and 5h/7d rate limits. A single sunset-gradient gauge — calm turquoise → blazing
-red — is reused for context usage **and** both rate-limit windows, so every
-gauge shares one visual language: **the fuller it gets, the hotter it looks.**
+One sunset-gradient gauge — calm turquoise → blazing red — is reused for context
+usage **and** both rate-limit windows, so every gauge speaks the same language:
+**the fuller it gets, the hotter it looks.** 🔥
 
-## Requirements
+- 🎚️ **One gauge, everywhere** — context usage + 5h/7d rate limits share the same turquoise→red gradient
+- 🌈 **Truecolor, with a 256-color fallback** — auto-detected, no banding (even on Apple Terminal.app)
+- 🌿 **git at a glance** — branch · staged · modified · ahead/behind
+- 💸 **Session cost & time** — live spend and an elapsed clock
+- 🎨 **Themeable** — the palette lives in `themes/<name>/colors.sh` (`summer` ships; `christmas` is a scaffold)
 
-- **bash** (works on macOS's stock bash 3.2)
-- **[jq](https://jqlang.github.io/jq/)** — `brew install jq` / `sudo apt install jq`
-- **A color terminal.** Truecolor (24-bit) is auto-detected and preferred; on
-  terminals without it (e.g. Apple Terminal.app) it falls back to a curated
-  256-color palette with no banding.
-
-## Install
+## 🚀 Quickstart
 
 ```bash
 git clone https://github.com/jgoneit/claude-statusline.git
@@ -27,12 +24,21 @@ cd claude-statusline
 ./install.sh
 ```
 
-`install.sh` checks for `jq`, copies the script to `~/.claude/statusline.sh`,
-and registers it in `~/.claude/settings.json` — backing up your settings first
-and asking before replacing any existing status line.
+Then open a Claude Code session — your new status line is there. ✨
+
+`install.sh` checks for `jq`, copies `statusline.sh` + `themes/` into `~/.claude/`,
+and registers it in `~/.claude/settings.json` — backing up your settings first and
+asking before replacing any existing status line. Safe to re-run.
+
+## 📋 Requirements
+
+- 🐚 **bash** — works on macOS's stock bash 3.2
+- 🔧 **[jq](https://jqlang.github.io/jq/)** — `brew install jq` / `sudo apt install jq`
+- 🎨 **A color terminal** — truecolor (24-bit) is auto-detected and preferred; without
+  it (e.g. Apple Terminal.app) it falls back to a curated 256-color palette.
 
 <details>
-<summary>Manual install</summary>
+<summary>🛠️ Manual install</summary>
 
 1. Copy `statusline.sh` **and the `themes/` folder** side by side (e.g. `~/.claude/statusline.sh` + `~/.claude/themes/`) and `chmod +x` the script.
 2. Register it in `~/.claude/settings.json` with an **absolute** path:
@@ -48,7 +54,7 @@ and asking before replacing any existing status line.
    ```
 </details>
 
-## Configuration
+## ⚙️ Configuration
 
 | Variable | Values | Effect |
 |---|---|---|
@@ -57,11 +63,11 @@ and asking before replacing any existing status line.
 | `STATUSLINE_DEMO_PCT` | `0`–`100` | Screenshot helper: fill every gauge at this percent instead of real session data |
 
 - † `christmas` is a scaffold (empty palette) — it renders uncoloured until its `colors.sh` is filled in.
-- In tmux, truecolor also needs `set -ga terminal-overrides ",*:Tc"` in `~/.tmux.conf`.
-- `refreshInterval` (in settings.json) re-runs the script on a timer so the
-  elapsed clock stays current while idle; omit it to update only on new messages.
+- 🖥️ In tmux, truecolor also needs `set -ga terminal-overrides ",*:Tc"` in `~/.tmux.conf`.
+- ⏱️ `refreshInterval` (in settings.json) re-runs the script on a timer so the elapsed
+  clock stays current while idle; omit it to update only on new messages.
 
-## What it shows
+## 👀 What it shows
 
 | Section | Description |
 |---|---|
@@ -74,10 +80,10 @@ and asking before replacing any existing status line.
 | `5h … 58% · ⧗ 04h 35m` | 5-hour rate limit usage + time remaining — Pro/Max |
 | `7d … 40% · ⧗ Wed 15:47` | 7-day rate limit usage + reset moment — Pro/Max |
 
-Before the first response, the 5h/7d rows show a dim `--` placeholder so the
-layout doesn't jump once the data arrives.
+> 💡 Before the first response, the 5h/7d rows show a dim `--` placeholder so the
+> layout doesn't jump once the data arrives.
 
-## Customize
+## 🎨 Customize
 
 Themes are colour-only files in `themes/<name>/colors.sh`; the engine lives in `statusline.sh`:
 
@@ -91,6 +97,6 @@ Preview a change with mock JSON:
 echo '{"model":{"display_name":"Opus 4.8"},"workspace":{"current_dir":"'"$PWD"'"},"context_window":{"used_percentage":43},"cost":{"total_cost_usd":0.21,"total_duration_ms":570000},"session_id":"demo","rate_limits":{"five_hour":{"used_percentage":58},"seven_day":{"used_percentage":40}}}' | ./statusline.sh
 ```
 
-## License
+## 📄 License
 
 MIT © jgoneit
