@@ -22,8 +22,8 @@ gauge shares one visual language: **the fuller it gets, the hotter it looks.**
 ## Install
 
 ```bash
-git clone https://github.com/jgoneit/claude-statusline-summer.git
-cd claude-statusline-summer
+git clone https://github.com/jgoneit/claude-statusline.git
+cd claude-statusline
 ./install.sh
 ```
 
@@ -34,7 +34,7 @@ and asking before replacing any existing status line.
 <details>
 <summary>Manual install</summary>
 
-1. Copy `statusline.sh` somewhere stable (e.g. `~/.claude/statusline.sh`) and `chmod +x` it.
+1. Copy `statusline.sh` **and the `themes/` folder** side by side (e.g. `~/.claude/statusline.sh` + `~/.claude/themes/`) and `chmod +x` the script.
 2. Register it in `~/.claude/settings.json` with an **absolute** path:
 
    ```json
@@ -52,8 +52,11 @@ and asking before replacing any existing status line.
 
 | Variable | Values | Effect |
 |---|---|---|
-| `STATUSLINE_SUMMER_COLOR` | `truecolor` \| `256` | Force a color mode (overrides auto-detection) |
+| `STATUSLINE_THEME` | `summer` (default) \| `christmas`† | Pick the palette `themes/<name>/colors.sh`; an unknown name falls back to summer |
+| `STATUSLINE_COLOR` | `truecolor` \| `256` | Force a color mode (overrides auto-detection). Legacy `STATUSLINE_SUMMER_COLOR` still works |
+| `STATUSLINE_DEMO_PCT` | `0`–`100` | Screenshot helper: fill every gauge at this percent instead of real session data |
 
+- † `christmas` is a scaffold (empty palette) — it renders uncoloured until its `colors.sh` is filled in.
 - In tmux, truecolor also needs `set -ga terminal-overrides ",*:Tc"` in `~/.tmux.conf`.
 - `refreshInterval` (in settings.json) re-runs the script on a timer so the
   elapsed clock stays current while idle; omit it to update only on new messages.
@@ -76,12 +79,11 @@ layout doesn't jump once the data arrives.
 
 ## Customize
 
-Everything lives in `statusline.sh`:
+Themes are colour-only files in `themes/<name>/colors.sh`; the engine lives in `statusline.sh`:
 
-- **Colors** — palette constants up top (`C_MODEL` `C_DIR` `C_GIT` `C_STAGE` `C_MOD` `C_MUTE`); truecolor and 256 sets, edit the one for your mode.
-- **Gauge gradient** — the 10-step `SUNSET` array and the empty-cell `TRACK` color.
-- **Gauge shape** — the `bar()` function (10 cells, 5% via the half-block `▌`).
-- **Segments / order** — the `printf '%s\n' …` rows at the bottom.
+- **Theme palette** — `themes/<name>/colors.sh` sets the 10-step `SUNSET` gradient and the `C_*` accents (`C_MODEL` `C_DIR` `C_GIT` `C_STAGE` `C_MOD` `C_MUTE`), in truecolor and 256 sets. Copy `summer/` to start a new theme.
+- **Gauge shape** — the `bar()` function in `statusline.sh` (10 cells, 5% via the half-block `▌`).
+- **Segments / order** — the `printf '%s\n' …` rows at the bottom of `statusline.sh`.
 
 Preview a change with mock JSON:
 
