@@ -75,6 +75,15 @@ $(printf '%s' "$input" | jq -j --arg sep "$US" '
   ] | map(tostring) | join($sep)')
 EOF
 
+# --- Demo override: STATUSLINE_DEMO_PCT -----------------------------------
+# For screenshots of any theme at an arbitrary fill: when set to a whole number,
+# every gauge (ctx, 5h, 7d) renders at that percent instead of real session data.
+# Non-numeric/empty is ignored; bar() clamps to 0-100 so out-of-range is harmless.
+case "${STATUSLINE_DEMO_PCT:-}" in
+  ''|*[!0-9]*) ;;
+  *) USED=$STATUSLINE_DEMO_PCT; RL5=$STATUSLINE_DEMO_PCT; RL7=$STATUSLINE_DEMO_PCT ;;
+esac
+
 # === bar: the one gauge to rule them all =================================
 # A percentage (0-100 int) -> a 10-cell sunset gradient bar with half-cell
 # (5%) resolution via the left-half block U+258C. Reused for context usage
