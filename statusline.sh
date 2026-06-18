@@ -48,7 +48,17 @@ esac
 # stops) and the C_* accents for the colour depth detected above. The engine
 # below is theme-agnostic. STATUSLINE_THEME picks the theme (default: summer);
 # an unknown name falls back to summer so the status line never blanks.
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlinks so SCRIPT_DIR is the script's REAL dir (themes/ lives next to it).
+# Installs symlink ~/.claude/statusline.sh -> this file; dirname doesn't follow links,
+# so without this SCRIPT_DIR points at ~/.claude (no themes/) and the palette source
+# silently fails -> colours vanish. macOS = bash 3.2 / BSD readlink (no `readlink -f`).
+src="${BASH_SOURCE[0]}"
+while [ -L "$src" ]; do
+  dir="$(cd -P "$(dirname "$src")" && pwd)"
+  src="$(readlink "$src")"
+  case $src in /*) ;; *) src="$dir/$src" ;; esac   # relative target -> absolute
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$src")" && pwd)"
 THEME="${STATUSLINE_THEME:-summer}"
 [ -f "$SCRIPT_DIR/themes/$THEME/colors.sh" ] || THEME=summer
 . "$SCRIPT_DIR/themes/$THEME/colors.sh"
