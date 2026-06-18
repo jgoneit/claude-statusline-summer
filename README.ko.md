@@ -4,7 +4,7 @@
 
 [English](./README.md) | **한국어**
 
-![claude-statusline-summer](./docs/screenshot.png)
+![claude-statusline-summer](./docs/claude-statusline-summer.png)
 
 모델, 현재 폴더, git 상태, 컨텍스트 사용량, 세션 비용/시간, 그리고 5h/7d rate
 limit을 보여줍니다. 잔잔한 청록 → 타오르는 빨강으로 흐르는 **하나의 선셋
@@ -86,10 +86,6 @@ mock JSON으로 바로 미리보기:
 ```bash
 echo '{"model":{"display_name":"Opus 4.8"},"workspace":{"current_dir":"'"$PWD"'"},"context_window":{"used_percentage":43},"cost":{"total_cost_usd":0.21,"total_duration_ms":570000},"session_id":"demo","rate_limits":{"five_hour":{"used_percentage":58},"seven_day":{"used_percentage":40}}}' | ./statusline.sh
 ```
-
-## 기여하기
-
-커밋은 [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `chore:`)를 따릅니다. PR 환영합니다.
 
 ## 라이선스
 

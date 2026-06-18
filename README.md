@@ -4,7 +4,7 @@
 
 **English** | [한국어](./README.ko.md)
 
-![claude-statusline-summer](./docs/screenshot.png)
+![claude-statusline-summer](./docs/claude-statusline-summer.png)
 
 Shows your model, folder, git status, context-window usage, session cost/time,
 and 5h/7d rate limits. A single sunset-gradient gauge — calm turquoise → blazing
@@ -88,10 +88,6 @@ Preview a change with mock JSON:
 ```bash
 echo '{"model":{"display_name":"Opus 4.8"},"workspace":{"current_dir":"'"$PWD"'"},"context_window":{"used_percentage":43},"cost":{"total_cost_usd":0.21,"total_duration_ms":570000},"session_id":"demo","rate_limits":{"five_hour":{"used_percentage":58},"seven_day":{"used_percentage":40}}}' | ./statusline.sh
 ```
-
-## Contributing
-
-Commits follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `chore:`). PRs welcome.
 
 ## License
 
